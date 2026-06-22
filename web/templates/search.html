@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+{% block title %}Explore Experiences — LeisureSpot{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="explore-header">
+  <div class="container">
+    <h1>Explore Experiences</h1>
+    <p class="explore-header-meta" id="results-count">Loading&hellip;</p>
+    <!-- Quick city pills -->
+    <div class="explore-city-pills">
+      <button class="explore-city-pill active" data-city="" onclick="selectCity(this,'')">Anywhere</button>
+      <button class="explore-city-pill" data-city="Gaborone" onclick="selectCity(this,'Gaborone')">Gaborone</button>
+      <button class="explore-city-pill" data-city="Maun" onclick="selectCity(this,'Maun')">Maun</button>
+      <button class="explore-city-pill" data-city="Kasane" onclick="selectCity(this,'Kasane')">Kasane</button>
+      <button class="explore-city-pill" data-city="Francistown" onclick="selectCity(this,'Francistown')">Francistown</button>
+      <button class="explore-city-pill" data-city="Palapye" onclick="selectCity(this,'Palapye')">Palapye</button>
+      <button class="explore-city-pill" data-city="Lobatse" onclick="selectCity(this,'Lobatse')">Lobatse</button>
+      <button class="explore-city-pill" data-city="Selebi-Phikwe" onclick="selectCity(this,'Selebi-Phikwe')">Selebi-Phikwe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile filter bar — always visible on mobile -->
+<div class="mobile-filter-bar" id="mobile-filter-bar">
+  <div class="container">
+    <div class="mobile-bar-inner">
+      <!-- Mobile search input with typeahead -->
+      <div class="mobile-search-wrap suggest-wrap">
+        <svg class="mobile-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="mobile-search-input" class="mobile-search-input" placeholder="Search experiences…" autocomplete="off">
+        <div class="suggest-dropdown" id="mobile-suggest-dropdown"></div>
+      </div>
+      <!-- Filter toggle -->
+      <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="openFilterDrawer()" aria-label="Open filters" style="display:flex;flex-shrink:0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filters
+        <span class="filter-count" id="filter-count"></span>
+      </button>
+    </div>
+    <div id="active-filters-mobile" class="filter-chips" style="margin-top:0.35rem;overflow:hidden"></div>
+  </div>
+</div>
+
+<!-- Filter overlay (mobile) -->
+<div class="filter-overlay" id="filter-overlay" onclick="closeFilterDrawer()"></div>
+
+<!-- Sticky FAB (mobile, shows on scroll) -->
+<button class="filter-fab" id="filter-fab" onclick="openFilterDrawer()">
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+  Filters
+  <span id="fab-count" style="display:none;background:white;color:var(--teal);border-radius:100px;font-size:0.7rem;padding:1px 7px;font-weight:800"></span>
+</button>
+
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+  <div class="search-layout">
+
+    <!-- ─── Sidebar Filters ─────────────────────────────────────────── -->
+    <aside class="search-sidebar" id="search-sidebar">
+      <div style="background:white;border:1px solid var(--border-color);border-radius:12px;padding:1.5rem;box-shadow:var(--shadow-card)">
+
+        <!-- Drawer header (mobile only) -->
+        <div class="filter-drawer-header">
+          <span style="font-weight:700;font-size:1rem;font-family:var(--font-display)">Filters</span>
+          <button onclick="closeFilterDrawer()" style="display:flex;align-items:center;gap:0.25rem;padding:0.35rem 0.75rem;border:1px solid var(--border-color);border-radius:8px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;background:none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Close
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="filter-section">
+          <label class="filter-label">Search</label>
+          <div class="filter-search-wrap suggest-wrap">
+            <svg class="filter-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="search-input" class="filter-input" placeholder="Experiences, activities&hellip;" autocomplete="off">
+            <div class="suggest-dropdown" id="suggest-dropdown"></div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-section">
+          <label class="filter-label">Location</label>
+          <select id="city-input" class="filter-input">
+            <option value="">Anywhere in Botswana</option>
+            <option>Gaborone</option>
+            <option>Francistown</option>
+            <option>Maun</option>
+            <option>Kasane</option>
+            <option>Palapye</option>
+            <option>Lobatse</option>
+            <option>Selebi-Phikwe</option>
+          </select>
+        </div>
+
+        <!-- Category -->
+        <div class="filter-section">
+          <label class="filter-label">Category</label>
+          <div id="category-filters" style="display:flex;flex-direction:column;gap:0.4rem">
+            <div class="skeleton" style="height:36px;border-radius:8px"></div>
+            <div class="skeleton" style="height:36px;border-radius:8px"></div>
+            <div class="skeleton" style="height:36px;border-radius:8px"></div>
+          </div>
+        </div>
+
+        <!-- Price range slider -->
+        <div class="filter-section">
+          <label class="filter-label" style="display:flex;justify-content:space-between">
+            Price Range (BWP)
+            <span id="price-range-label" style="font-weight:600;color:var(--teal)">Any</span>
+          </label>
+          <div class="price-slider-wrap" id="price-slider-wrap">
+            <div class="price-slider-track"></div>
+            <div class="price-slider-fill" id="price-slider-fill"></div>
+            <div class="price-thumb" id="thumb-min" title="Minimum price"></div>
+            <div class="price-thumb" id="thumb-max" title="Maximum price"></div>
+          </div>
+          <div class="price-slider-values">
+            <span>BWP 0</span><span>BWP 5,000+</span>
+          </div>
+          <!-- Hidden inputs kept for getParams() compatibility -->
+          <input type="hidden" id="min-price">
+          <input type="hidden" id="max-price">
+        </div>
+
+
+        <!-- Booking type -->
+        <div class="filter-section">
+          <label class="filter-label">Booking Type</label>
+          <div style="display:flex;gap:0.4rem">
+            <button id="btype-all"     class="btype-btn active" data-btype="" onclick="setBookingType(this,'')">All</button>
+            <button id="btype-instant" class="btype-btn" data-btype="INSTANT" onclick="setBookingType(this,'INSTANT')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Instant
+            </button>
+            <button id="btype-request" class="btype-btn" data-btype="REQUEST" onclick="setBookingType(this,'REQUEST')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+              Request
+            </button>
+          </div>
+        </div>
+
+        <!-- Featured -->
+        <div class="filter-section">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem">
+            <input type="checkbox" id="filter-featured" style="width:auto;accent-color:var(--teal)">
+            <span>Featured experiences only</span>
+          </label>
+        </div>
+        <input type="hidden" id="filter-instant" value="">
+
+        <!-- Actions -->
+        <div class="filter-sticky-footer">
+          <button onclick="doSearch(1)" class="btn btn-primary" style="width:100%">Apply Filters</button>
+          <button onclick="clearFilters()" style="width:100%;background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--text-secondary);font-family:var(--font-body);padding:0.25rem">Clear all filters</button>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ─── Results ──────────────────────────────────────────────────── -->
+    <div>
+      <!-- Sort bar -->
+      <div class="sort-bar">
+        <div id="active-filters" class="filter-chips"></div>
+        <div class="sort-bar-right">
+          <select id="sort-select" class="sort-select" onchange="doSearch(1)">
+            <option value="newest">Newest</option>
+            <option value="rating">Top Rated</option>
+            <option value="popular">Most Popular</option>
+            <option value="price_asc">Price: Low &rarr; High</option>
+            <option value="price_desc">Price: High &rarr; Low</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-toggle-btn active" id="btn-grid" title="Grid view" onclick="setView('grid')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="view-toggle-btn" id="btn-list" title="List view" onclick="setView('list')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-grid" class="results-grid">
+        {% for i in range(6) %}<div class="skeleton" style="height:380px;border-radius:14px"></div>{% endfor %}
+      </div>
+      <div id="pagination" style="margin-top:2rem"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.btype-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.5rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.btype-btn:hover { border-color: var(--teal); color: var(--teal); }
+.btype-btn.active { background: var(--teal); border-color: var(--teal); color: white; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPage = 1;
+let currentView = localStorage.getItem('explore_view') || 'grid';
+let searchDebounce;
+let allCategories = [];
+
+// ─── View toggle ──────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  localStorage.setItem('explore_view', v);
+  document.getElementById('btn-grid').classList.toggle('active', v === 'grid');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  const grid = document.getElementById('results-grid');
+  grid.className = v === 'list' ? 'results-list' : 'results-grid';
+  doSearch(currentPage);
+}
+
+// ─── City pills ───────────────────────────────────────────────────────
+function selectCity(el, city) {
+  document.querySelectorAll('.explore-city-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('city-input').value = city;
+  doSearch(1);
+}
+
+// ─── Drawer ───────────────────────────────────────────────────────────
+function openFilterDrawer() {
+  document.getElementById('search-sidebar').classList.add('drawer-open');
+  document.getElementById('filter-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFilterDrawer() {
+  document.getElementById('search-sidebar').classList.remove('drawer-open');
+  document.getElementById('filter-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── Params ──────────────────────────────────────────────────────────
+function setBookingType(btn, btype) {
+  document.querySelectorAll('.btype-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('filter-instant').value = btype;
+  doSearch(1);
+}
+
+function getParams() {
+  return {
+    search:       document.getElementById('search-input').value.trim(),
+    city:         document.getElementById('city-input').value,
+    category:     document.getElementById('active-category')?.dataset.slug || '',
+    min_price:    document.getElementById('min-price').value,
+    max_price:    document.getElementById('max-price').value,
+    sort_by:      document.getElementById('sort-select').value,
+    featured:     document.getElementById('filter-featured').checked ? 'true' : '',
+    booking_type: document.getElementById('filter-instant').value,
+  };
+}
+
+// ─── Active filter chips ──────────────────────────────────────────────
+function renderFilterChips(p) {
+  const chips = [];
+  const add = (label, clearFn) =>
+    chips.push(`<span class="filter-chip">${label}
+      <button onclick="${clearFn};doSearch(1)" title="Remove filter">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button></span>`);
+
+  if (p.search)    add(`"${p.search}"`, `document.getElementById('search-input').value=''`);
+  if (p.city)      add(p.city, `document.getElementById('city-input').value='';syncCityPills('')`);
+  if (p.category) {
+    const cat = allCategories.find(c => c.slug === p.category);
+    add(cat?.name || p.category, `clearCategory()`);
+  }
+  if (p.min_price && p.max_price) add(`BWP ${Number(p.min_price).toLocaleString()} – ${Number(p.max_price).toLocaleString()}`, `resetPriceSlider()`);
+  else if (p.min_price) add(`Min BWP ${Number(p.min_price).toLocaleString()}`, `resetPriceSlider()`);
+  else if (p.max_price) add(`Max BWP ${Number(p.max_price).toLocaleString()}`, `resetPriceSlider()`);
+  if (p.booking_type) add(p.booking_type === 'INSTANT' ? '⚡ Instant only' : '📋 Request only', `resetBookingType()`);
+  if (p.featured)  add('Featured', `document.getElementById('filter-featured').checked=false`);
+
+  const html = chips.join('');
+  document.getElementById('active-filters').innerHTML = html;
+  const mob = document.getElementById('active-filters-mobile');
+  if (mob) mob.innerHTML = html;
+
+  // Filter count badge
+  const count = chips.length;
+  const countEl = document.getElementById('filter-count');
+  if (countEl) { countEl.textContent = count || ''; countEl.classList.toggle('visible', count > 0); }
+  const fabCount = document.getElementById('fab-count');
+  if (fabCount) { fabCount.textContent = count; fabCount.style.display = count > 0 ? 'inline' : 'none'; }
+  const fab = document.getElementById('filter-fab');
+  if (fab) fab.style.background = count > 0 ? 'var(--orange)' : 'var(--teal)';
+}
+
+function syncCityPills(city) {
+  document.querySelectorAll('.explore-city-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.city === city);
+  });
+}
+
+function clearCategory() {
+  const prev = document.getElementById('active-category');
+  if (prev) { prev.classList.remove('active'); prev.removeAttribute('id'); }
+}
+
+// ─── URL state ────────────────────────────────────────────────────────
+function pushUrlState(p, page) {
+  const qs = new URLSearchParams();
+  if (p.search)      qs.set('search', p.search);
+  if (p.city)        qs.set('city', p.city);
+  if (p.category)    qs.set('category', p.category);
+  if (p.min_price)   qs.set('min_price', p.min_price);
+  if (p.max_price)   qs.set('max_price', p.max_price);
+  if (p.featured)      qs.set('featured', 'true');
+  if (p.booking_type)  qs.set('booking_type', p.booking_type);
+  if (p.sort_by && p.sort_by !== 'newest') qs.set('sort_by', p.sort_by);
+  if (page > 1)    qs.set('page', page);
+  history.pushState(null, '', '/search' + (qs.toString() ? '?' + qs.toString() : ''));
+}
+
+function restoreFromUrl() {
+  const url = new URLSearchParams(window.location.search);
+  if (url.get('search'))   document.getElementById('search-input').value = url.get('search');
+  if (url.get('city'))     { document.getElementById('city-input').value = url.get('city'); syncCityPills(url.get('city')); }
+  if (url.get('min_price')) document.getElementById('min-price').value = url.get('min_price');
+  if (url.get('max_price')) document.getElementById('max-price').value = url.get('max_price');
+  if (url.get('featured') === 'true') document.getElementById('filter-featured').checked = true;
+  if (url.get('booking_type')) {
+    const bt = url.get('booking_type');
+    document.getElementById('filter-instant').value = bt;
+    document.querySelectorAll('.btype-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.btype === bt);
+    });
+  }
+  if (url.get('sort_by')) document.getElementById('sort-select').value = url.get('sort_by');
+  if (url.get('page'))    currentPage = parseInt(url.get('page')) || 1;
+  // category is restored after categories load
+}
+
+// ─── Search ───────────────────────────────────────────────────────────
+async function doSearch(page = 1) {
+  currentPage = page;
+  const p = getParams();
+  pushUrlState(p, page);
+  renderFilterChips(p);
+
+  // Dynamic page title
+  const parts = [];
+  if (p.search) parts.push(`"${p.search}"`);
+  if (p.city)   parts.push(p.city);
+  document.title = parts.length
+    ? `${parts.join(' in ')} — LeisureSpot`
+    : 'Explore Experiences — LeisureSpot';
+
+  const grid = document.getElementById('results-grid');
+  grid.innerHTML = Array(6).fill(
+    `<div class="skeleton" style="height:${currentView === 'list' ? '160' : '380'}px;border-radius:14px"></div>`
+  ).join('');
+
+  // Map sort_by values to API params
+  let sort_by = p.sort_by;
+  let sort_dir = '';
+  if (sort_by === 'price_asc')  { sort_by = 'price'; sort_dir = 'asc'; }
+  if (sort_by === 'price_desc') { sort_by = 'price'; sort_dir = 'desc'; }
+
+  const qs = buildQueryString({ ...p, sort_by, sort_dir, page, per_page: 12,
+    booking_type: p.booking_type || '' });
+  const data = await apiFetch('/listings' + qs);
+
+  if (!data?.success) {
+    grid.innerHTML = `<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;padding:4rem 2rem;gap:1rem;color:var(--text-secondary);text-align:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      <h3 style="color:var(--text-primary)">Something went wrong</h3>
+      <p style="font-size:0.875rem">Make sure the API server is running on port 4000</p></div>`;
+    document.getElementById('results-count').textContent = '0 results found';
+    return;
+  }
+
+  const { items, total, pages } = data.data;
+  const from = (page - 1) * 12 + 1;
+  const to   = Math.min(page * 12, total);
+  document.getElementById('results-count').textContent = total
+    ? `Showing ${from}–${to} of ${total} experience${total !== 1 ? 's' : ''}`
+    : '0 results found';
+
+  if (!items.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:3rem 1rem;text-align:center;color:var(--text-secondary)">
+      <p style="font-size:0.95rem">No experiences found matching your filters.</p>
+    </div>`;
+  } else {
+    grid.innerHTML = items.map(l => renderListingCard(l, currentView)).join('');
+  }
+
+  document.getElementById('pagination').innerHTML = renderPagination(page, pages, 'doSearch');
+  if (window.innerWidth <= 900) closeFilterDrawer();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function resetBookingType() {
+  document.getElementById('filter-instant').value = '';
+  document.querySelectorAll('.btype-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.btype === '');
+  });
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('mobile-search-input').value = '';
+  document.getElementById('city-input').value = '';
+  document.getElementById('min-price').value = '';
+  document.getElementById('max-price').value = '';
+  document.getElementById('filter-featured').checked = false;
+  document.getElementById('sort-select').value = 'newest';
+  clearCategory();
+  syncCityPills('');
+  resetPriceSlider();
+  resetBookingType();
+  doSearch(1);
+}
+
+function selectCategory(el, slug) {
+  const prev = document.getElementById('active-category');
+  if (prev) {
+    prev.classList.remove('active');
+    prev.removeAttribute('id');
+    if (prev.dataset.slug === slug) { doSearch(1); return; }
+  }
+  el.id = 'active-category';
+  el.classList.add('active');
+  doSearch(1);
+}
+
+window.addEventListener('popstate', () => { restoreFromUrl(); doSearch(currentPage); });
+
+// ─── Price range slider ───────────────────────────────────────────────
+const PRICE_MAX = 5000;
+let sliderMin = 0, sliderMax = PRICE_MAX;
+
+function pct(val) { return (val / PRICE_MAX) * 100; }
+
+function updateSliderUI() {
+  const fill = document.getElementById('price-slider-fill');
+  const thumbMin = document.getElementById('thumb-min');
+  const thumbMax = document.getElementById('thumb-max');
+  const label = document.getElementById('price-range-label');
+  if (!fill) return;
+  fill.style.left  = pct(sliderMin) + '%';
+  fill.style.right = (100 - pct(sliderMax)) + '%';
+  thumbMin.style.left = pct(sliderMin) + '%';
+  thumbMax.style.left = pct(sliderMax) + '%';
+  const minSet = sliderMin > 0, maxSet = sliderMax < PRICE_MAX;
+  label.textContent = minSet || maxSet
+    ? `BWP ${sliderMin.toLocaleString()} – ${sliderMax < PRICE_MAX ? sliderMax.toLocaleString() : '5,000+'}`
+    : 'Any';
+  document.getElementById('min-price').value = sliderMin > 0 ? sliderMin : '';
+  document.getElementById('max-price').value = sliderMax < PRICE_MAX ? sliderMax : '';
+}
+
+function resetPriceSlider() {
+  sliderMin = 0; sliderMax = PRICE_MAX;
+  updateSliderUI();
+  document.getElementById('min-price').value = '';
+  document.getElementById('max-price').value = '';
+}
+
+function initPriceSlider() {
+  const wrap = document.getElementById('price-slider-wrap');
+  if (!wrap) return;
+  updateSliderUI();
+
+  function startDrag(thumb, isMin) {
+    return function(e) {
+      e.preventDefault();
+      const rect = wrap.getBoundingClientRect();
+      function move(ev) {
+        const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const val = Math.round((ratio * PRICE_MAX) / 50) * 50;
+        if (isMin) { sliderMin = Math.min(val, sliderMax - 50); }
+        else        { sliderMax = Math.max(val, sliderMin + 50); }
+        updateSliderUI();
+      }
+      function stop() {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', stop);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', stop);
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => doSearch(1), 300);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', stop);
+    };
+  }
+
+  document.getElementById('thumb-min').addEventListener('mousedown', startDrag(null, true));
+  document.getElementById('thumb-min').addEventListener('touchstart', startDrag(null, true), { passive: false });
+  document.getElementById('thumb-max').addEventListener('mousedown', startDrag(null, false));
+  document.getElementById('thumb-max').addEventListener('touchstart', startDrag(null, false), { passive: false });
+}
+
+// ─── Typeahead ────────────────────────────────────────────────────────
+let suggestDebounce;
+let suggestIdx = -1;
+
+function buildSuggestHtml(data) {
+  const parts = [];
+  const addGroup = (label, items, renderFn) => {
+    if (!items?.length) return;
+    parts.push(`<div class="suggest-group-label">${label}</div>`);
+    items.forEach(item => parts.push(renderFn(item)));
+  };
+
+  addGroup('Experiences', data.listings, l =>
+    `<div class="suggest-item" data-type="listing" data-value="${esc(l.title)}" data-id="${l.id}">
+      <div class="suggest-item-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+      <div><div>${esc(l.title)}</div><div class="suggest-item-sub">${esc(l.city)} &middot; BWP ${Number(l.price).toLocaleString()}</div></div>
+    </div>`
+  );
+  addGroup('Categories', data.categories, c =>
+    `<div class="suggest-item" data-type="category" data-value="${esc(c.name)}" data-slug="${esc(c.slug)}">
+      <div class="suggest-item-icon">${catIcon(c.icon, 13)}</div>
+      <div><div>${esc(c.name)}</div><div class="suggest-item-sub">${c.listing_count || 0} experience${c.listing_count !== 1 ? 's' : ''}</div></div>
+    </div>`
+  );
+  addGroup('Cities', data.cities, city =>
+    `<div class="suggest-item" data-type="city" data-value="${esc(city)}">
+      <div class="suggest-item-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div>${esc(city)}</div>
+    </div>`
+  );
+  return parts.join('');
+}
+
+function closeSuggest() {
+  document.querySelectorAll('.suggest-dropdown').forEach(d => d.classList.remove('open'));
+  suggestIdx = -1;
+}
+
+function applySuggestItem(item) {
+  const type = item.dataset.type;
+  if (type === 'listing') {
+    const val = item.dataset.value;
+    document.getElementById('search-input').value = val;
+    document.getElementById('mobile-search-input').value = val;
+    closeSuggest();
+    doSearch(1);
+  } else if (type === 'category') {
+    const slug = item.dataset.slug;
+    const catBtn = document.querySelector(`.cat-btn[data-slug="${slug}"]`);
+    if (catBtn) selectCategory(catBtn, slug);
+    closeSuggest();
+  } else if (type === 'city') {
+    const city = item.dataset.value;
+    document.getElementById('city-input').value = city;
+    syncCityPills(city);
+    closeSuggest();
+    doSearch(1);
+  }
+}
+
+async function fetchSuggest(q, dropdownEl) {
+  if (q.length < 2) { dropdownEl.classList.remove('open'); return; }
+  clearTimeout(suggestDebounce);
+  suggestDebounce = setTimeout(async () => {
+    const res = await apiFetch(`/listings/suggest?q=${encodeURIComponent(q)}`);
+    if (!res?.success) return;
+    const data = res.data;
+    const hasResults = data.listings?.length || data.categories?.length || data.cities?.length;
+    if (!hasResults) { dropdownEl.classList.remove('open'); return; }
+    dropdownEl.innerHTML = buildSuggestHtml(data);
+    if (typeof lucide !== 'undefined') lucide.createIcons({ el: dropdownEl });
+    dropdownEl.classList.add('open');
+    suggestIdx = -1;
+    dropdownEl.querySelectorAll('.suggest-item').forEach(item => {
+      item.addEventListener('mousedown', e => { e.preventDefault(); applySuggestItem(item); });
+    });
+  }, 200);
+}
+
+function handleSuggestKeydown(e, dropdownEl) {
+  if (!dropdownEl.classList.contains('open')) return;
+  const items = [...dropdownEl.querySelectorAll('.suggest-item')];
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    items[suggestIdx]?.classList.remove('focused');
+    suggestIdx = Math.min(suggestIdx + 1, items.length - 1);
+    items[suggestIdx]?.classList.add('focused');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    items[suggestIdx]?.classList.remove('focused');
+    suggestIdx = Math.max(suggestIdx - 1, -1);
+    if (suggestIdx >= 0) items[suggestIdx]?.classList.add('focused');
+  } else if (e.key === 'Enter' && suggestIdx >= 0) {
+    e.stopImmediatePropagation();
+    applySuggestItem(items[suggestIdx]);
+  } else if (e.key === 'Escape') {
+    closeSuggest();
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  setView(currentView);
+  restoreFromUrl();
+  initPriceSlider();
+
+  // Load categories
+  const catData = await apiFetch('/categories');
+  if (catData?.success) {
+    allCategories = catData.data;
+    const urlCat = new URLSearchParams(window.location.search).get('category');
+    document.getElementById('category-filters').innerHTML = catData.data.map(cat => {
+      const isActive = cat.slug === urlCat;
+      const iconHtml = catIcon(cat.icon);
+      return `<button class="cat-btn${isActive ? ' active' : ''}" data-slug="${cat.slug}"
+        ${isActive ? 'id="active-category"' : ''}
+        onclick="selectCategory(this,'${cat.slug}')">
+        <span>${iconHtml}</span>
+        <span style="flex:1">${esc(cat.name)}</span>
+        <span class="cat-count">${cat.listing_count || 0}</span>
+      </button>`;
+    }).join('');
+  }
+
+  doSearch(currentPage);
+
+  // ── Sidebar search + typeahead ──
+  const searchEl = document.getElementById('search-input');
+  const suggestDrop = document.getElementById('suggest-dropdown');
+  searchEl.addEventListener('input', () => {
+    const q = searchEl.value.trim();
+    document.getElementById('mobile-search-input').value = searchEl.value;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => doSearch(1), 420);
+    fetchSuggest(q, suggestDrop);
+  });
+  searchEl.addEventListener('keydown', e => {
+    handleSuggestKeydown(e, suggestDrop);
+    if (e.key === 'Enter' && suggestIdx < 0) { clearTimeout(searchDebounce); doSearch(1); }
+  });
+  searchEl.addEventListener('blur', () => setTimeout(closeSuggest, 150));
+
+  // ── Mobile search + typeahead ──
+  const mobileSearchEl = document.getElementById('mobile-search-input');
+  const mobileDrop = document.getElementById('mobile-suggest-dropdown');
+  mobileSearchEl.addEventListener('input', () => {
+    const q = mobileSearchEl.value;
+    searchEl.value = q;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => doSearch(1), 420);
+    fetchSuggest(q.trim(), mobileDrop);
+  });
+  mobileSearchEl.addEventListener('keydown', e => {
+    handleSuggestKeydown(e, mobileDrop);
+    if (e.key === 'Enter' && suggestIdx < 0) { clearTimeout(searchDebounce); doSearch(1); }
+  });
+  mobileSearchEl.addEventListener('blur', () => setTimeout(closeSuggest, 150));
+
+  document.getElementById('city-input').addEventListener('change', () => doSearch(1));
+  document.getElementById('filter-featured').addEventListener('change', () => doSearch(1));
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.suggest-wrap')) closeSuggest();
+  });
+});
+</script>
+{% endblock %}

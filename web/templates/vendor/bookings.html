@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Vendor Bookings — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+      <span>Vendor Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/vendor/dashboard"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+      <a href="/vendor/listings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-list"      style="width:17px;height:17px"></i></span> Listings</a>
+      <a href="/vendor/listings/new" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="plus-circle"     style="width:17px;height:17px"></i></span> New Listing</a>
+      <a href="/vendor/bookings"     class="sidebar-link active"><span class="sidebar-icon"><i data-lucide="calendar"   style="width:17px;height:17px"></i></span> Bookings</a>
+      <a href="/vendor/availability" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar-x"      style="width:17px;height:17px"></i></span> Availability</a>
+      <a href="/vendor/profile"      class="sidebar-link"><span class="sidebar-icon"><i data-lucide="settings"         style="width:17px;height:17px"></i></span> Profile</a>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+      <a href="/dashboard"           class="sidebar-link"><span class="sidebar-icon"><i data-lucide="user"             style="width:17px;height:17px"></i></span> My Account</a>
+      <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+        <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+      </button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Incoming Bookings</h1>
+      <p class="dashboard-subtitle">Manage and respond to customer bookings</p>
+    </div>
+
+    <div id="bookings-table">
+      <div class="table-wrapper">
+        <table class="vendor-bookings-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Listing</th>
+              <th>Date</th>
+              <th>Guests</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-table-body">
+            <tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__vendorPage = 'bookings';</script>
+<script src="/static/js/vendor.js"></script>
+{% endblock %}

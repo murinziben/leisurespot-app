@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block title %}Become a Vendor — LeisureSpot{% endblock %}
+
+{% block extra_css %}
+<style>
+.vendor-hero {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Left panel — brand side */
+.vendor-hero-left {
+  background: linear-gradient(145deg, var(--teal-dark, #0a7c6e) 0%, var(--teal) 60%, #0fa37a 100%);
+  padding: 4rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.vendor-hero-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.vendor-hero-left::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.vendor-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  width: fit-content;
+}
+
+.vendor-hero-left h1 {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  color: white;
+}
+.vendor-hero-left h1 span {
+  color: #ffd86b;
+}
+
+.vendor-hero-left p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  opacity: 0.88;
+  margin-bottom: 2.5rem;
+  max-width: 400px;
+}
+
+.vendor-perks {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+.vendor-perk {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+.vendor-perk-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.vendor-perk-text strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+.vendor-perk-text span {
+  font-size: 0.82rem;
+  opacity: 0.78;
+  line-height: 1.5;
+}
+
+.vendor-stat-row {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.18);
+  position: relative;
+  z-index: 1;
+}
+.vendor-stat strong {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffd86b;
+}
+.vendor-stat span {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+/* Right panel — form side */
+.vendor-hero-right {
+  background: #f8f9fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  overflow-y: auto;
+}
+
+.vendor-form-box {
+  width: 100%;
+  max-width: 420px;
+}
+
+.vendor-form-box h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+}
+.vendor-form-box > p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.75rem;
+}
+
+/* Guest prompt card */
+.guest-signin-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  text-align: center;
+}
+.guest-signin-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--teal-light, #e6f5f2);
+  display: flex;
+  align-items: center;
+  justify-content:center;
+  margin: 0 auto 1.25rem;
+  color: var(--teal);
+}
+.guest-signin-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.guest-signin-card p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  margin-bottom: 1.75rem;
+  line-height: 1.6;
+}
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+.signin-divider::before,
+.signin-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* Form card */
+.vendor-form-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+
+@media (max-width: 860px) {
+  .vendor-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .vendor-hero-left {
+    padding: 3rem 1.5rem;
+  }
+  .vendor-hero-left h1 {
+    font-size: 1.875rem;
+  }
+  .vendor-stat-row { display: none; }
+  .vendor-hero-right {
+    padding: 2rem 1.25rem;
+  }
+  .vendor-form-box {
+    max-width: 100%;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vendor-hero">
+
+  <!-- LEFT: brand panel -->
+  <div class="vendor-hero-left">
+    <div class="vendor-hero-badge">
+      <i data-lucide="zap" style="width:13px;height:13px"></i>
+      For Vendors
+    </div>
+
+    <h1>Grow your business<br>with <span>LeisureSpot</span></h1>
+    <p>Reach thousands of travellers looking for authentic Botswana experiences — from safaris to cultural tours to spa getaways.</p>
+
+    <div class="vendor-perks">
+      <div class="vendor-perk">
+        <div class="vendor-perk-icon"><i data-lucide="globe" style="width:17px;height:17px"></i></div>
+        <div class="vendor-perk-text">
+          <strong>Nationwide Reach</strong>
+          <span>Get discovered by local and international visitors browsing all 7 cities</span>
+        </div>
+      </div>
+      <div class="vendor-perk">
+        <div class="vendor-perk-icon"><i data-lucide="shield-check" style="width:17px;height:17px"></i></div>
+        <div class="vendor-perk-text">
+          <strong>Verified Listings</strong>
+          <span>Our review process builds trust and sets your business apart</span>
+        </div>
+      </div>
+      <div class="vendor-perk">
+        <div class="vendor-perk-icon"><i data-lucide="trending-up" style="width:17px;height:17px"></i></div>
+        <div class="vendor-perk-text">
+          <strong>Simple Commission</strong>
+          <span>Only 10% per completed booking — no monthly fees, no hidden costs</span>
+        </div>
+      </div>
+      <div class="vendor-perk">
+        <div class="vendor-perk-icon"><i data-lucide="calendar-check" style="width:17px;height:17px"></i></div>
+        <div class="vendor-perk-text">
+          <strong>Instant or Request Bookings</strong>
+          <span>Choose how you take bookings — approve manually or let customers book instantly</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vendor-stat-row">
+      <div class="vendor-stat">
+        <strong>100+</strong>
+        <span>Active listings</span>
+      </div>
+      <div class="vendor-stat">
+        <strong>7</strong>
+        <span>Cities covered</span>
+      </div>
+      <div class="vendor-stat">
+        <strong>24h</strong>
+        <span>Avg. approval time</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: form panel -->
+  <div class="vendor-hero-right">
+    <div class="vendor-form-box">
+
+      <!-- Guest: not logged in -->
+      <div id="guest-prompt" style="display:none">
+        <div class="guest-signin-card">
+          <div class="guest-signin-icon">
+            <i data-lucide="store" style="width:26px;height:26px"></i>
+          </div>
+          <h2>Ready to list your business?</h2>
+          <p>Sign in or create a free account to submit your vendor application. Takes less than 2 minutes.</p>
+          <a href="/login?next=/vendor/onboarding" class="btn btn-primary btn-lg w-full">Sign In</a>
+          <div class="signin-divider">or</div>
+          <a href="/register?next=/vendor/onboarding" class="btn btn-outline btn-lg w-full">Create a Free Account</a>
+          <p style="margin-top:1.25rem;font-size:0.8rem;color:var(--text-secondary)">
+            Already a vendor? <a href="/login" style="color:var(--teal);font-weight:600">Sign in to your dashboard &rarr;</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Already a vendor -->
+      <div id="already-vendor" style="display:none">
+        <div class="guest-signin-card">
+          <div class="guest-signin-icon" style="background:var(--orange-light);color:var(--orange)">
+            <i data-lucide="check-circle" style="width:26px;height:26px"></i>
+          </div>
+          <h2>You're already a vendor!</h2>
+          <p>Head to your dashboard to manage your listings and bookings.</p>
+          <a href="/vendor/dashboard" class="btn btn-primary btn-lg w-full">Go to Dashboard &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Application form -->
+      <div id="form-wrap" style="display:none">
+        <h2>Submit your application</h2>
+        <p>Fill in your business details and our team will review within 24 hours.</p>
+
+        <div id="onboarding-error" class="alert alert-error" style="display:none;margin-bottom:1rem"></div>
+
+        <div class="vendor-form-card">
+          <form id="onboarding-form">
+            <div class="form-group">
+              <label class="form-label">Business Name *</label>
+              <input type="text" name="business_name" class="form-control" placeholder="e.g. Okavango Delta Safaris" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Description</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="What makes your experience unique..."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label class="form-label">City *</label>
+                <select name="city" class="form-control" required>
+                  <option value="">— Select —</option>
+                  <option>Gaborone</option>
+                  <option>Francistown</option>
+                  <option>Maun</option>
+                  <option>Kasane</option>
+                  <option>Palapye</option>
+                  <option>Lobatse</option>
+                  <option>Selebi-Phikwe</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" class="form-control" placeholder="+267 71 000 000">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Address</label>
+              <input type="text" name="address" class="form-control" placeholder="123 Main Street, Gaborone">
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem">
+              <label class="form-label">Website <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>
+              <input type="url" name="website" class="form-control" placeholder="https://yourbusiness.co.bw">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-full" id="onboard-btn">Submit Application</button>
+            <p style="text-align:center;margin-top:0.875rem;font-size:0.8rem;color:var(--text-secondary)">
+              Not your account? <a href="/login?next=/vendor/onboarding" style="color:var(--teal);font-weight:600">Switch account</a>
+            </p>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    document.getElementById('guest-prompt').style.display = 'block';
+    return;
+  }
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.vendor) {
+    document.getElementById('already-vendor').style.display = 'block';
+  } else {
+    document.getElementById('form-wrap').style.display = 'block';
+  }
+});
+
+document.getElementById('onboarding-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('onboard-btn');
+  const errEl = document.getElementById('onboarding-error');
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  errEl.style.display = 'none';
+
+  const fd = new FormData(e.target);
+  const data = await apiFetch('/vendors/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      business_name: fd.get('business_name'),
+      description: fd.get('description') || null,
+      city: fd.get('city'),
+      phone: fd.get('phone') || null,
+      address: fd.get('address') || null,
+      website: fd.get('website') || null,
+    }),
+  });
+
+  btn.classList.remove('btn-loading'); btn.disabled = false;
+
+  if (data?.success) {
+    await loadCurrentUser();
+    showToast('Application submitted! We will review within 24 hours.', 'success');
+    setTimeout(() => window.location.href = '/vendor/dashboard', 1500);
+  } else {
+    errEl.textContent = data?.detail || 'Submission failed. Please try again.';
+    errEl.style.display = 'flex';
+  }
+});
+</script>
+{% endblock %}

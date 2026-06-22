@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — LeisureSpot{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section style="background:var(--teal);padding:4rem 0 3rem">
+  <div class="container" style="max-width:720px;text-align:center">
+    <h1 style="font-family:var(--font-display);font-size:clamp(1.75rem,4vw,2.75rem);color:white;font-weight:700;margin-bottom:0.75rem">Privacy Policy</h1>
+    <p style="font-size:0.9rem;color:rgba(255,255,255,0.65)">Last updated: January 2026</p>
+  </div>
+</section>
+
+<section style="padding:4rem 0 6rem;background:white">
+  <div class="container" style="max-width:760px">
+
+    <!-- Quick-nav -->
+    <div style="background:var(--secondary);border-radius:12px;padding:1.5rem;margin-bottom:3rem;border:1px solid var(--border-color)">
+      <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:0.75rem">Contents</p>
+      <ol style="display:flex;flex-direction:column;gap:0.45rem;padding-left:1.25rem">
+        {% for title in ['Information We Collect','How We Use Your Information','Information Sharing','Data Security','Cookies','Your Rights','Children\'s Privacy','Changes to This Policy','Contact Us'] %}
+        <li style="font-size:0.875rem"><a href="#section-{{ loop.index }}" style="color:var(--teal);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ title }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    <p style="color:var(--text-secondary);line-height:1.85;margin-bottom:2.5rem">
+      LeisureSpot Botswana ("LeisureSpot", "we", "us", or "our") operates the LeisureSpot platform, accessible at <strong>leisurespot.co.bw</strong>. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use our platform. Please read this policy carefully. By using LeisureSpot, you agree to the practices described here.
+    </p>
+
+    {% set sections = [
+      (1,'Information We Collect','We collect information you provide directly to us, information collected automatically, and information from third parties.',
+        [
+          '<strong>Account information:</strong> name, email address, phone number, and password when you register.',
+          '<strong>Profile information:</strong> profile photo, preferences, and communication settings you choose to provide.',
+          '<strong>Booking information:</strong> listings you book, dates, guest counts, special requests, and payment details (processed securely via our payment partner).',
+          '<strong>Vendor information:</strong> business name, address, banking details, and identification documents for vendors who list on the platform.',
+          '<strong>Usage data:</strong> pages visited, search queries, clicks, time spent, and device/browser information collected automatically.',
+          '<strong>Communications:</strong> messages you send to vendors or our support team through the platform.',
+        ]
+      ),
+      (2,'How We Use Your Information','We use the information we collect to operate, improve, and personalise the LeisureSpot platform.',
+        [
+          'Process and fulfil your bookings and send you related confirmations and receipts.',
+          'Create and maintain your account and verify your identity.',
+          'Communicate with you about your bookings, account, and platform updates.',
+          'Personalise your experience and recommend experiences relevant to your interests.',
+          'Process payments and prevent fraudulent transactions.',
+          'Analyse platform usage to improve our features and user experience.',
+          'Send you marketing communications where you have opted in (you may opt out at any time).',
+          'Comply with legal obligations under Botswana law.',
+        ]
+      ),
+      (3,'Information Sharing','We do not sell your personal information. We share it only in the following limited circumstances.',
+        [
+          '<strong>With vendors:</strong> When you book an experience, we share your name, contact details, and booking details with the relevant vendor to fulfil your booking.',
+          '<strong>Service providers:</strong> We share data with trusted third-party providers (payment processors, email services, analytics) who assist us in operating the platform, under strict data processing agreements.',
+          '<strong>Legal requirements:</strong> We may disclose information if required by Botswana law, court order, or to protect the safety of our users or the public.',
+          '<strong>Business transfers:</strong> In the event of a merger or acquisition, user data may be transferred as part of that transaction, with appropriate notice.',
+        ]
+      ),
+      (4,'Data Security','We implement industry-standard security measures to protect your personal information.',
+        [
+          'All data is transmitted over HTTPS/TLS encrypted connections.',
+          'Passwords are hashed using bcrypt and never stored in plaintext.',
+          'Payment card data is handled exclusively by our PCI-DSS compliant payment processor — we never store full card numbers.',
+          'Access to personal data within our team is limited to personnel who need it to perform their duties.',
+          'Despite our best efforts, no method of transmission over the internet is 100% secure. We encourage you to use a strong, unique password and to log out of shared devices.',
+        ]
+      ),
+      (5,'Cookies','We use cookies and similar tracking technologies to enhance your experience.',
+        [
+          '<strong>Essential cookies:</strong> Required for the platform to function (session management, security).',
+          '<strong>Preference cookies:</strong> Remember your settings and preferences across visits.',
+          '<strong>Analytics cookies:</strong> Help us understand how users interact with the platform so we can improve it.',
+          'You can control cookie settings through your browser. Note that disabling essential cookies may affect platform functionality.',
+        ]
+      ),
+      (6,'Your Rights','You have the following rights regarding your personal information.',
+        [
+          '<strong>Access:</strong> Request a copy of the personal data we hold about you.',
+          '<strong>Correction:</strong> Request that we correct any inaccurate or incomplete information.',
+          '<strong>Deletion:</strong> Request deletion of your personal data, subject to our legal obligations.',
+          '<strong>Portability:</strong> Request your data in a machine-readable format.',
+          '<strong>Opt-out:</strong> Unsubscribe from marketing emails at any time using the link in any email we send.',
+          'To exercise any of these rights, contact us at <strong>privacy@leisurespot.co.bw</strong>.',
+        ]
+      ),
+      (7,"Children's Privacy",'LeisureSpot is not directed at children under the age of 13.',
+        [
+          'We do not knowingly collect personal information from children under 13.',
+          'If you believe a child has provided us with personal information, please contact us and we will promptly delete it.',
+          'Users between 13 and 18 should use the platform only with parental or guardian consent.',
+        ]
+      ),
+      (8,'Changes to This Policy','We may update this Privacy Policy from time to time.',
+        [
+          'When we make material changes, we will notify you by email and display a prominent notice on the platform.',
+          'The "last updated" date at the top of this page always reflects the most recent version.',
+          'Your continued use of LeisureSpot after changes take effect constitutes your acceptance of the revised policy.',
+        ]
+      ),
+      (9,'Contact Us','If you have questions or concerns about this Privacy Policy, please reach out.',
+        [
+          'Email: <strong>privacy@leisurespot.co.bw</strong>',
+          'Address: LeisureSpot Botswana, Plot 54368, CBD, Gaborone, Botswana',
+          'Phone: +267 71 234 567',
+        ]
+      ),
+    ] %}
+
+    {% for num, title, intro, points in sections %}
+    <div id="section-{{ num }}" style="margin-bottom:3rem;padding-bottom:3rem;border-bottom:1px solid var(--border-color)">
+      <h2 style="font-family:var(--font-display);font-size:1.25rem;margin-bottom:0.625rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--teal);color:white;font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">{{ num }}</span>
+        {{ title }}
+      </h2>
+      <p style="color:var(--text-secondary);line-height:1.8;margin-bottom:1rem">{{ intro }}</p>
+      <ul style="display:flex;flex-direction:column;gap:0.625rem;padding-left:0;list-style:none">
+        {% for point in points %}
+        <li style="display:flex;align-items:flex-start;gap:0.625rem;font-size:0.9rem;color:var(--text-secondary);line-height:1.75">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:4px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>{{ point }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+
+    <div style="background:var(--secondary);border-radius:12px;padding:1.5rem;border:1px solid var(--border-color);display:flex;align-items:center;gap:1rem">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;color:var(--teal);flex-shrink:0">
+        <i data-lucide="mail" style="width:18px;height:18px"></i>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.2rem">Questions about your privacy?</div>
+        <div style="font-size:0.85rem;color:var(--text-secondary)">Email us at <a href="mailto:privacy@leisurespot.co.bw" style="color:var(--teal)">privacy@leisurespot.co.bw</a> or visit our <a href="/contact" style="color:var(--teal)">Contact page</a>.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

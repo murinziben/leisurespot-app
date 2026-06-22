@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Vendor Dashboard — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+      <span>Vendor Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/vendor/dashboard"   class="sidebar-link active"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+      <a href="/vendor/listings"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-list"      style="width:17px;height:17px"></i></span> Listings</a>
+      <a href="/vendor/listings/new" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="plus-circle"     style="width:17px;height:17px"></i></span> New Listing</a>
+      <a href="/vendor/bookings"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar"         style="width:17px;height:17px"></i></span> Bookings</a>
+      <a href="/vendor/availability" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar-x"      style="width:17px;height:17px"></i></span> Availability</a>
+      <a href="/vendor/profile"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="settings"         style="width:17px;height:17px"></i></span> Profile</a>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+      <a href="/dashboard"          class="sidebar-link"><span class="sidebar-icon"><i data-lucide="user"             style="width:17px;height:17px"></i></span> My Account</a>
+      <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+        <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+      </button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="dashboard-title" id="vendor-name">Vendor Dashboard</h1>
+          <div class="dashboard-subtitle" style="display:flex;align-items:center;gap:0.75rem;margin-top:0.25rem">
+            <span>Business Status:</span>
+            <span id="vendor-status"></span>
+          </div>
+        </div>
+        <a href="/vendor/listings/new" class="btn btn-primary" style="display:flex;align-items:center;gap:0.5rem">
+          <i data-lucide="plus" style="width:16px;height:16px"></i> New Listing
+        </a>
+      </div>
+    </div>
+
+    <div id="vendor-content">
+      <div id="pending-notice" style="display:none;margin-bottom:1.5rem" class="alert alert-warning">
+        <i data-lucide="clock" style="width:16px;height:16px;margin-right:0.5rem;flex-shrink:0"></i>
+        Your vendor application is under review. You'll be notified once approved (usually within 24 hours).
+      </div>
+
+      <div class="vendor-stats-grid" id="vendor-stats">
+        <div class="stat-card skeleton" style="height:96px"></div>
+        <div class="stat-card skeleton" style="height:96px"></div>
+        <div class="stat-card skeleton" style="height:96px"></div>
+        <div class="stat-card skeleton" style="height:96px"></div>
+      </div>
+
+      <!-- ── Earnings & Trend Chart ───────────────────────── -->
+      <div class="card" id="earnings-card" style="margin-bottom:1.5rem">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+            <div>
+              <h3 style="font-size:1rem;margin:0 0 0.2rem">Revenue &amp; Booking Trends</h3>
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin:0">Monthly breakdown across all your listings</p>
+            </div>
+            <div id="period-tabs" style="display:flex;gap:3px;background:#f3f4f6;border-radius:9px;padding:3px">
+              <button class="period-tab" onclick="setChartPeriod(3,this)" style="padding:0.3rem 0.875rem;border:none;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;background:none;color:var(--text-secondary);transition:all .15s">3M</button>
+              <button class="period-tab active" onclick="setChartPeriod(6,this)" style="padding:0.3rem 0.875rem;border:none;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;background:white;color:var(--teal);box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all .15s">6M</button>
+              <button class="period-tab" onclick="setChartPeriod(12,this)" style="padding:0.3rem 0.875rem;border:none;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;background:none;color:var(--text-secondary);transition:all .15s">12M</button>
+            </div>
+          </div>
+          <div style="position:relative;height:270px">
+            <canvas id="earnings-canvas"></canvas>
+          </div>
+          <!-- Legend -->
+          <div style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;color:var(--text-secondary)">
+              <div style="width:13px;height:13px;background:var(--teal);border-radius:3px;flex-shrink:0"></div>
+              Monthly Revenue
+            </div>
+            <div style="display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;color:var(--text-secondary)">
+              <div style="width:18px;height:3px;background:#E8711A;border-radius:2px;flex-shrink:0"></div>
+              Booking Count
+            </div>
+            <div style="display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;color:var(--text-secondary)">
+              <div style="width:18px;height:2px;background:rgba(0,128,128,0.45);border-radius:2px;flex-shrink:0;border-top:2px dashed rgba(0,128,128,0.45)"></div>
+              Revenue Trend
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vendor-content-grid">
+        <div class="card">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+              <h3 style="font-size:1rem">Top Listings</h3>
+              <a href="/vendor/listings" class="btn btn-ghost btn-sm">View all</a>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Listing</th><th>Bookings</th><th>Rating</th></tr></thead>
+                <tbody id="top-listings"><tr><td colspan="3" style="text-align:center;padding:1rem"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h3 style="font-size:1rem;margin-bottom:1rem">Quick Actions</h3>
+            <div style="display:flex;flex-direction:column;gap:0.75rem">
+              <a href="/vendor/listings/new" class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                <i data-lucide="plus-circle" style="width:16px;height:16px"></i> Create New Listing
+              </a>
+              <a href="/vendor/bookings" class="btn btn-outline" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                <i data-lucide="calendar" style="width:16px;height:16px"></i> View All Bookings
+              </a>
+              <a href="/vendor/listings" class="btn btn-ghost" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                <i data-lucide="layout-list" style="width:16px;height:16px"></i> Manage Listings
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>window.__vendorPage = 'dashboard';</script>
+<script src="/static/js/vendor.js"></script>
+{% endblock %}

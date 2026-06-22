@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block title %}Experience — LeisureSpot{% endblock %}
+
+{% block content %}
+<div id="listing-hero" class="listing-detail-hero">
+  <div class="skeleton" style="width:100%;height:100%"></div>
+</div>
+
+<!-- Mobile sticky book bar (shown ≤1100px, replaces sidebar) -->
+<div class="mobile-book-bar" id="mobile-book-bar" style="display:none">
+  <div>
+    <div style="font-size:1.25rem;font-weight:800;font-family:var(--font-display)" id="mobile-price">—</div>
+    <div style="font-size:0.75rem;color:var(--text-secondary)" id="mobile-price-unit"></div>
+  </div>
+  <a href="#" id="mobile-book-btn" class="btn btn-primary" style="flex-shrink:0">Book Now</a>
+</div>
+
+<div class="container">
+  <div class="listing-detail-layout">
+    <!-- Main Content -->
+    <div>
+      <div class="listing-breadcrumb">
+        <a href="/">Home</a> <span>›</span>
+        <a href="/search">Explore</a> <span>›</span>
+        <span id="breadcrumb-cat">Loading…</span>
+      </div>
+
+      <div id="listing-main">
+        <div class="skeleton" style="height:2.5rem;width:60%;margin-bottom:1rem"></div>
+        <div class="skeleton" style="height:1rem;width:40%;margin-bottom:1.5rem"></div>
+        <div class="skeleton" style="height:8rem"></div>
+      </div>
+    </div>
+
+    <!-- Booking Sidebar (desktop only — hidden ≤1100px by CSS) -->
+    <div>
+      <div class="booking-summary" id="booking-sidebar">
+        <div class="skeleton" style="height:200px"></div>
+        <div style="padding:1.5rem">
+          <div class="skeleton" style="height:1.5rem;margin-bottom:0.75rem"></div>
+          <div class="skeleton" style="height:1rem;margin-bottom:0.5rem"></div>
+          <div class="skeleton" style="height:2.5rem;margin-top:1rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LISTING_ID = "{{ listing_id }}";
+let listingData = null;
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function nl2br(str) {
+  return esc(str).replace(/\n/g, '<br>');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const data = await apiFetch(`/listings/${LISTING_ID}`);
+  if (!data?.success) {
+    document.getElementById('listing-main').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
+        <h3>Listing not found</h3>
+        <a href="/search" class="btn btn-primary mt-2">Browse Experiences</a>
+      </div>`;
+    return;
+  }
+
+  const l = data.data;
+  listingData = l;
+  document.title = l.title + ' — LeisureSpot';
+
+  // Update meta description dynamically
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc); }
+  metaDesc.content = (l.short_description || l.description || '').slice(0, 155);
+
+  const images = l.images?.length ? l.images : (l.primary_image ? [{ url: l.primary_image }] : []);
+  const primaryImg = l.primary_image || images[0]?.url || 'https://images.unsplash.com/photo-1577971132997-c10be9372519?w=1600&h=900&fit=crop';
+
+  // Hero — primary image
+  document.getElementById('listing-hero').innerHTML = `
+    <img src="${primaryImg}" alt="${esc(l.title)}" id="hero-img"
+      style="width:100%;height:100%;object-fit:cover;transition:opacity 0.25s">
+    <div class="listing-detail-hero-overlay"></div>
+    ${images.length > 1 ? `<div style="position:absolute;bottom:1rem;right:1rem;background:rgba(0,0,0,0.55);color:white;font-size:0.75rem;font-weight:600;padding:0.3rem 0.75rem;border-radius:100px;display:flex;align-items:center;gap:0.4rem">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      ${images.length} photos
+    </div>` : ''}
+  `;
+
+  // Breadcrumb
+  document.getElementById('breadcrumb-cat').innerHTML = l.category
+    ? `<a href="/search?category=${l.category.slug}">${esc(l.category.name)}</a> <span>›</span> <span>${esc(l.title)}</span>`
+    : esc(l.title);
+
+  // Category label
+  const catLabel = l.category
+    ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.05em;margin-bottom:0.5rem">
+        ${catIcon(l.category.icon, 14)} ${esc(l.category.name)}
+      </div>` : '';
+
+  // Duration
+  const dur = l.duration_minutes ? formatDuration(l.duration_minutes) : null;
+  const durationHtml = dur ? `
+    <div class="highlight-item">
+      <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      ${dur}
+    </div>` : '';
+
+  // Includes / excludes
+  const includesHtml = l.includes?.length
+    ? `<ul class="includes-list">${l.includes.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : '';
+  const excludesHtml = l.excludes?.length
+    ? `<ul class="excludes-list">${l.excludes.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : '';
+
+  // Tags
+  const tagsHtml = l.tags?.length
+    ? l.tags.map(t => `<span class="chip" style="cursor:default">${esc(t)}</span>`).join('') : '';
+
+  // Reviews
+  const reviewsHtml = buildReviewsHtml(l.reviews);
+
+  // Gallery strip (only if multiple images)
+  const galleryHtml = images.length > 1 ? `
+    <div class="listing-gallery" id="listing-gallery">
+      ${images.map((img, i) => `
+        <img src="${esc(img.url)}" alt="Photo ${i+1}" class="listing-gallery-thumb ${i === 0 ? 'active' : ''}"
+          onclick="switchHeroImage('${esc(img.url)}', this)"
+          onerror="this.style.display='none'">`).join('')}
+    </div>` : '';
+
+  document.getElementById('listing-main').innerHTML = `
+    <!-- Title row -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem">
+      <div>
+        ${catLabel}
+        <h1 style="font-size:clamp(1.5rem,3vw,2.25rem)">${esc(l.title)}</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;flex-wrap:wrap">
+        ${l.is_featured ? `<span class="badge badge-primary" style="display:inline-flex;align-items:center;gap:4px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Featured
+        </span>` : ''}
+        <button onclick="shareListingUrl()" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem" title="Share">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+
+    <!-- Meta row -->
+    <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:center;gap:0.35rem;font-weight:600">
+        ${renderStars(l.avg_rating, l.review_count)}
+      </div>
+      ${l.city ? `<span style="color:var(--text-secondary);font-size:0.875rem;display:inline-flex;align-items:center;gap:0.3rem">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${esc(l.city)}
+      </span>` : ''}
+      ${l.vendor_name ? `<span style="color:var(--text-secondary);font-size:0.875rem;display:inline-flex;align-items:center;gap:0.3rem">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+        ${esc(l.vendor_name)}
+      </span>` : ''}
+    </div>
+
+    <!-- Gallery strip -->
+    ${galleryHtml}
+
+    <!-- Highlights -->
+    <div class="listing-highlights" style="${galleryHtml ? 'margin-top:1rem' : ''}">
+      ${durationHtml}
+      <div class="highlight-item">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Up to ${l.max_guests} guests
+      </div>
+      ${l.address ? `<div class="highlight-item"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>${esc(l.address)}</div>` : ''}
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Description -->
+    <div style="margin-bottom:2rem">
+      <h3 style="margin-bottom:0.875rem">About this experience</h3>
+      <p style="color:var(--text-secondary);line-height:1.8">${nl2br(l.description || 'No description available.')}</p>
+    </div>
+
+    <!-- Includes / Excludes -->
+    ${includesHtml || excludesHtml ? `
+    <div class="divider"></div>
+    <div style="margin-bottom:2rem">
+      <h3 style="margin-bottom:1rem">What's included</h3>
+      <div class="includes-grid">
+        ${includesHtml ? `<div><h4 style="font-size:0.875rem;color:var(--success);margin-bottom:0.5rem;font-weight:600">Included</h4>${includesHtml}</div>` : ''}
+        ${excludesHtml ? `<div><h4 style="font-size:0.875rem;color:var(--danger);margin-bottom:0.5rem;font-weight:600">Not included</h4>${excludesHtml}</div>` : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Cancellation policy -->
+    ${l.cancellation_policy ? `
+    <div class="divider"></div>
+    <div style="margin-bottom:2rem">
+      <h3 style="margin-bottom:0.5rem">Cancellation policy</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">${nl2br(l.cancellation_policy)}</p>
+    </div>` : ''}
+
+    <!-- Tags -->
+    ${tagsHtml ? `
+    <div class="divider"></div>
+    <div style="margin-bottom:2rem">
+      <h3 style="margin-bottom:0.875rem">Tags</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem">${tagsHtml}</div>
+    </div>` : ''}
+
+    <div class="divider"></div>
+
+    <!-- Reviews -->
+    <div id="reviews-section">
+      <div style="margin-bottom:1.25rem">
+        <h3>Reviews${l.review_count > 0 ? ` <span style="font-weight:400;color:var(--text-secondary);font-size:0.9rem">(${l.review_count})</span>` : ''}</h3>
+      </div>
+      <div id="reviews-list">${reviewsHtml}</div>
+      <div id="review-form-wrap" style="margin-top:1.5rem"></div>
+    </div>
+  `;
+
+  // Desktop sidebar — no image (already shown in hero), just price + CTA
+  document.getElementById('booking-sidebar').innerHTML = `
+    <div class="booking-summary-body">
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:1.75rem;font-weight:800;font-family:var(--font-display)">BWP ${Number(l.price).toLocaleString()}</div>
+        <div style="font-size:0.8rem;color:var(--text-secondary)">${esc(l.price_unit || 'per person')}</div>
+      </div>
+      ${durationHtml ? `<div style="font-size:0.875rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.4rem;margin-bottom:0.75rem">${durationHtml}</div>` : ''}
+      <a href="/book/${l.id}" class="btn btn-primary w-full" style="justify-content:center;display:flex">
+        Book Now
+      </a>
+      <div style="height:1px;background:var(--border-color);margin:1.25rem 0"></div>
+      <div style="font-size:0.8rem;color:var(--text-secondary);text-align:center;display:flex;align-items:center;justify-content:center;gap:0.4rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        No charges until confirmed
+      </div>
+    </div>
+  `;
+
+  // Mobile sticky bar — remove inline style so CSS media query controls visibility
+  document.getElementById('mobile-price').textContent = `BWP ${Number(l.price).toLocaleString()}`;
+  document.getElementById('mobile-price-unit').textContent = l.price_unit || 'per person';
+  document.getElementById('mobile-book-btn').href = `/book/${l.id}`;
+  document.getElementById('mobile-book-bar').style.display = '';
+
+  // Check review eligibility (only if logged in)
+  if (localStorage.getItem('access_token')) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role !== 'VENDOR' && user.role !== 'ADMIN') {
+      checkReviewEligibility(l.id, l.reviews || []);
+    }
+  }
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+function switchHeroImage(url, thumbEl) {
+  const heroImg = document.getElementById('hero-img');
+  if (!heroImg) return;
+  heroImg.style.opacity = '0';
+  setTimeout(() => { heroImg.src = url; heroImg.style.opacity = '1'; }, 200);
+  document.querySelectorAll('.listing-gallery-thumb').forEach(t => t.classList.remove('active'));
+  thumbEl.classList.add('active');
+}
+
+function buildReviewsHtml(reviews) {
+  if (!reviews?.length) {
+    return `
+      <div style="text-align:center;padding:2.5rem 1rem;background:#fafafa;border-radius:12px;border:1px dashed var(--border-color)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="margin:0 auto 0.875rem;display:block;opacity:0.35"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <p style="font-size:0.9rem;color:var(--text-secondary);margin:0">No reviews yet — be the first to share your experience!</p>
+      </div>`;
+  }
+
+  // Compute rating distribution
+  const dist = [5,4,3,2,1].map(star => ({
+    star,
+    count: reviews.filter(r => Math.round(r.rating) === star).length,
+  }));
+  const maxCount = Math.max(...dist.map(d => d.count), 1);
+  const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+
+  const histogram = `
+    <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:0.5rem 0.75rem;margin-bottom:1.75rem;padding:1.25rem;background:#fafafa;border-radius:12px;border:1px solid var(--border-color)">
+      <!-- Big avg number -->
+      <div style="grid-column:1;grid-row:1/7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-right:1rem;border-right:1px solid var(--border-color);min-width:72px">
+        <div style="font-size:3rem;font-weight:800;font-family:var(--font-display);color:var(--text-primary);line-height:1">${avg.toFixed(1)}</div>
+        <div style="margin:0.35rem 0">${renderStars(avg)}</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary)">${reviews.length} review${reviews.length !== 1 ? 's' : ''}</div>
+      </div>
+      ${dist.map(d => `
+        <div style="font-size:0.78rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.25rem;white-space:nowrap">
+          ${d.star}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="#E8711A" stroke="#E8711A" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div style="background:#e5e7eb;border-radius:100px;height:7px;overflow:hidden">
+          <div style="height:100%;width:${d.count ? Math.round((d.count/maxCount)*100) : 0}%;background:${d.star >= 4 ? 'var(--teal)' : d.star === 3 ? '#f59e0b' : 'var(--danger)'};border-radius:100px;transition:width .4s ease"></div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);text-align:right;min-width:16px">${d.count}</div>
+      `).join('')}
+    </div>`;
+
+  const cards = reviews.map(r => {
+    const initial = (r.author_name || 'G')[0].toUpperCase();
+    const avatarColor = ['#0d9488','#e8711a','#7c3aed','#db2777','#2563eb','#16a34a'][initial.charCodeAt(0) % 6];
+    const verified = r.booking_id;
+    return `
+      <div class="review-card" style="padding:1.25rem;border:1px solid var(--border-color);border-radius:12px;background:white">
+        <div style="display:flex;align-items:flex-start;gap:0.875rem;margin-bottom:${r.comment ? '0.875rem' : '0'}">
+          <!-- Avatar -->
+          <div style="width:40px;height:40px;border-radius:50%;background:${avatarColor};color:white;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${initial}
+          </div>
+          <!-- Meta -->
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.2rem">
+              <span style="font-weight:700;font-size:0.9rem">${esc(r.author_name || 'Guest')}</span>
+              ${verified ? `<span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.7rem;font-weight:600;color:var(--success);background:#dcfce7;padding:2px 7px;border-radius:100px">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                Verified stay
+              </span>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+              ${renderStars(r.rating)}
+              <span style="font-size:0.75rem;color:var(--text-secondary)">
+                ${new Date(r.created_at).toLocaleDateString('en-BW',{year:'numeric',month:'short',day:'numeric'})}
+              </span>
+            </div>
+          </div>
+        </div>
+        ${r.comment ? `<p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.75;margin:0;padding-left:52px">${nl2br(r.comment)}</p>` : ''}
+      </div>`;
+  }).join('');
+
+  return histogram + `<div style="display:flex;flex-direction:column;gap:0.875rem">${cards}</div>`;
+}
+
+async function checkReviewEligibility(listingId, existingReviews) {
+  const bData = await apiFetch('/bookings/my');
+  if (!bData?.success) return;
+  const completed = bData.data.filter(b => b.listing_id === listingId && b.status === 'COMPLETED');
+  if (!completed.length) return;
+
+  // Don't show form if already reviewed this booking
+  if (existingReviews.some(r => r.booking_id === completed[0].id)) return;
+
+  document.getElementById('review-form-wrap').innerHTML = `
+    <div class="review-form">
+      <h4 style="margin-bottom:0.75rem;font-family:var(--font-display)">Leave a review</h4>
+      <div class="star-picker" id="star-picker" data-rating="0">
+        ${[1,2,3,4,5].map(n => `
+          <svg data-val="${n}" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+            fill="none" stroke="#E8711A" stroke-width="1.5" style="cursor:pointer"
+            onmouseover="hoverStars(${n})" onmouseout="resetStarHover()"
+            onclick="setRating(${n})">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>`).join('')}
+        <span id="star-label" style="font-size:0.8rem;color:var(--text-secondary);margin-left:0.5rem;line-height:28px"></span>
+      </div>
+      <textarea id="review-comment" placeholder="Share what you loved about this experience…"
+        style="width:100%;min-height:90px;border:1.5px solid var(--border-color);border-radius:8px;padding:0.75rem;font-size:0.875rem;font-family:var(--font-body);resize:vertical;outline:none;box-sizing:border-box;margin-top:0.75rem"
+        onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-color)'"></textarea>
+      <button onclick="submitReview('${listingId}','${completed[0].id}')" class="btn btn-primary" style="margin-top:0.75rem">
+        Submit Review
+      </button>
+    </div>`;
+}
+
+const starLabels = ['','Terrible','Poor','Okay','Good','Excellent'];
+let currentRating = 0;
+
+function hoverStars(n) {
+  document.querySelectorAll('#star-picker svg').forEach((s, i) => {
+    s.setAttribute('fill', i < n ? '#E8711A' : 'none');
+  });
+  document.getElementById('star-label').textContent = starLabels[n];
+}
+function resetStarHover() {
+  document.querySelectorAll('#star-picker svg').forEach((s, i) => {
+    s.setAttribute('fill', i < currentRating ? '#E8711A' : 'none');
+  });
+  document.getElementById('star-label').textContent = currentRating ? starLabels[currentRating] : '';
+}
+function setRating(n) {
+  currentRating = n;
+  resetStarHover();
+}
+
+async function submitReview(listingId, bookingId) {
+  if (!currentRating) { showToast('Please select a star rating', 'warning'); return; }
+  const comment = document.getElementById('review-comment').value.trim();
+  const btn = document.querySelector('#review-form-wrap .btn-primary');
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  const res = await apiFetch(`/listings/${listingId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify({ rating: currentRating, comment, booking_id: bookingId }),
+  });
+  btn.classList.remove('btn-loading'); btn.disabled = false;
+  if (res?.success) {
+    showToast('Review submitted — thank you!', 'success');
+    document.getElementById('review-form-wrap').innerHTML =
+      `<div class="alert alert-success" style="font-size:0.875rem">Your review has been published.</div>`;
+    const refreshed = await apiFetch(`/listings/${listingId}`);
+    if (refreshed?.success) {
+      document.getElementById('reviews-list').innerHTML = buildReviewsHtml(refreshed.data.reviews);
+    }
+  } else {
+    showToast(res?.detail || 'Failed to submit review', 'error');
+  }
+}
+
+function shareListingUrl() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: document.title, url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard', 'success'));
+  } else {
+    showToast('Copy this URL: ' + url, 'info');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — LeisureSpot{% endblock %}
+
+{% block content %}
+<div style="background:var(--teal);padding:2.5rem 0">
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="color:white;font-size:1.75rem" id="dashboard-greeting">My Dashboard</h1>
+        <p style="color:rgba(255,255,255,0.65);margin-top:0.25rem;font-size:0.875rem">Manage your bookings and account</p>
+      </div>
+      <a href="/search" class="btn btn-primary">+ New Booking</a>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="padding-top:2.5rem;padding-bottom:5rem">
+
+  <!-- Stats -->
+  <div class="dashboard-stats-grid" id="dashboard-stats">
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+  </div>
+
+  <!-- Quick links -->
+  <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+    <a href="/account" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Account Settings
+    </a>
+    <a href="/search" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Browse Experiences
+    </a>
+  </div>
+
+  <!-- Tab Nav -->
+  <div class="tab-nav" role="tablist">
+    <button class="tab-btn active" onclick="switchTab('all', this)" role="tab" aria-selected="true">All</button>
+    <button class="tab-btn" onclick="switchTab('CONFIRMED', this)" role="tab">Confirmed</button>
+    <button class="tab-btn" onclick="switchTab('PENDING', this)" role="tab">Pending</button>
+    <button class="tab-btn" onclick="switchTab('COMPLETED', this)" role="tab">Completed</button>
+    <button class="tab-btn" onclick="switchTab('CANCELLED', this)" role="tab">Cancelled</button>
+  </div>
+
+  <div id="bookings-list">
+    <div class="loading-state"><div class="spinner"></div><p>Loading bookings…</p></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allBookings = [];
+let currentFilter = 'all';
+let _reviewedBookingIds = new Set();   // booking IDs that already have a review
+let _pendingReviewIds   = new Set();   // eligible for review but not yet reviewed
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('en-BW', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const name = user.profile?.first_name || user.full_name?.split(' ')[0] || '';
+  if (name) document.getElementById('dashboard-greeting').textContent = `Welcome back, ${name}!`;
+
+  const data = await apiFetch('/bookings/my');
+  if (!data?.success) { showToast('Failed to load bookings', 'error'); return; }
+  allBookings = data.data;
+
+  // Determine which completed past bookings need a review
+  const today = new Date(); today.setHours(0,0,0,0);
+  const completedPast = allBookings.filter(b => {
+    const d = new Date(b.booking_date + 'T00:00:00');
+    return b.status === 'COMPLETED' && d < today;
+  });
+
+  if (completedPast.length) {
+    // Fetch existing reviews to know which are already reviewed
+    const revRes = await apiFetch('/reviews/my');
+    const myReviews = revRes?.data || [];
+    myReviews.forEach(r => _reviewedBookingIds.add(r.booking_id));
+    completedPast.forEach(b => {
+      if (!_reviewedBookingIds.has(b.id)) _pendingReviewIds.add(b.id);
+    });
+    renderPendingReviewsBanner();
+  }
+
+  renderStats();
+  renderBookings('all');
+});
+
+function renderPendingReviewsBanner() {
+  if (!_pendingReviewIds.size) return;
+  const count = _pendingReviewIds.size;
+  const existing = document.getElementById('pending-reviews-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'pending-reviews-banner';
+  banner.style.cssText = 'background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border:1px solid #fcd34d;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.875rem;flex-wrap:wrap';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:#f59e0b;border-radius:10px;flex-shrink:0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    <div style="flex:1;min-width:180px">
+      <div style="font-weight:700;color:#92400e;font-size:0.9375rem">
+        ${count} experience${count > 1 ? 's' : ''} awaiting your review
+      </div>
+      <div style="font-size:0.8rem;color:#a16207;margin-top:0.15rem">
+        Share your feedback and help other travellers discover Botswana's best experiences.
+      </div>
+    </div>
+    <button onclick="switchTabToCompleted()" class="btn btn-sm"
+      style="background:#f59e0b;color:white;border:none;font-weight:600;white-space:nowrap">
+      Leave Reviews
+    </button>`;
+  const statsEl = document.getElementById('dashboard-stats');
+  statsEl.parentNode.insertBefore(banner, statsEl);
+}
+
+function switchTabToCompleted() {
+  const btn = document.querySelector('.tab-btn[onclick*="COMPLETED"]');
+  if (btn) btn.click();
+}
+
+function renderStats() {
+  const confirmed = allBookings.filter(b => b.status === 'CONFIRMED').length;
+  const pending   = allBookings.filter(b => b.status === 'PENDING').length;
+  const completed = allBookings.filter(b => b.status === 'COMPLETED').length;
+  const spent     = allBookings
+    .filter(b => ['CONFIRMED','COMPLETED'].includes(b.status))
+    .reduce((s, b) => s + (b.total_amount || 0), 0);
+
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="flex items-center justify-between">
+        <div><div class="stat-value">${allBookings.length}</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-icon">${icon('clipboard-list', 20)}</div>
+      </div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--success)">
+      <div class="flex items-center justify-between">
+        <div><div class="stat-value">${confirmed}</div><div class="stat-label">Confirmed</div></div>
+        <div class="stat-icon" style="background:#dcfce7">${icon('check-circle', 20)}</div>
+      </div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--warning)">
+      <div class="flex items-center justify-between">
+        <div><div class="stat-value">${pending}</div><div class="stat-label">Pending</div></div>
+        <div class="stat-icon" style="background:#fef3c7">${icon('clock', 20)}</div>
+      </div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--info)">
+      <div class="flex items-center justify-between">
+        <div><div class="stat-value">BWP ${spent.toLocaleString()}</div><div class="stat-label">Total Spent</div></div>
+        <div class="stat-icon" style="background:#dbeafe">${icon('dollar-sign', 20)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function switchTab(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  renderBookings(filter);
+}
+
+function renderBookings(filter) {
+  const filtered = filter === 'all' ? allBookings : allBookings.filter(b => b.status === filter);
+  const el = document.getElementById('bookings-list');
+
+  if (!filtered.length) {
+    const label = filter === 'all' ? '' : filter.toLowerCase() + ' ';
+    el.innerHTML = `
+      <div class="empty-state">
+        ${icon('calendar', 48)}
+        <h3>No ${label}bookings yet</h3>
+        <p>Discover amazing experiences across Botswana and make your first booking!</p>
+        <a href="/search" class="btn btn-primary mt-2">Browse Experiences</a>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(b => {
+    const img = b.listing_image || 'https://images.unsplash.com/photo-1577971132997-c10be9372519?w=200&h=160&fit=crop';
+    const canCancel = ['PENDING','CONFIRMED'].includes(b.status);
+    const needsReview = _pendingReviewIds.has(b.id);
+    return `
+      <a class="booking-card" href="/dashboard/bookings/${b.id}" style="${needsReview ? 'border-left:3px solid #f59e0b' : ''}">
+        <img src="${img}" alt="${esc(b.listing_title || '')}"
+          style="width:100%;height:64px;border-radius:var(--radius-sm);object-fit:cover"
+          onerror="this.src='https://images.unsplash.com/photo-1577971132997-c10be9372519?w=200&h=160&fit=crop'">
+        <div>
+          <div style="font-weight:600;margin-bottom:0.3rem;font-size:0.9375rem">${esc(b.listing_title || 'Experience')}</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);display:flex;gap:0.875rem;flex-wrap:wrap">
+            <span style="display:inline-flex;align-items:center;gap:0.3rem">${icon('calendar',12)} ${formatDate(b.booking_date)}</span>
+            <span style="display:inline-flex;align-items:center;gap:0.3rem">${icon('users',12)} ${b.guests} guest${b.guests !== 1 ? 's' : ''}</span>
+            <span style="display:inline-flex;align-items:center;gap:0.3rem">${icon('dollar-sign',12)} BWP ${(b.total_amount||0).toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="booking-card-actions">
+          ${getStatusBadge(b.status)}
+          ${needsReview ? `
+            <a class="btn btn-sm" href="/dashboard/bookings/${b.id}"
+              onclick="event.stopPropagation()"
+              style="background:#f59e0b;color:white;border:none;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem;white-space:nowrap">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Rate
+            </a>` : ''}
+          ${canCancel ? `
+            <button class="btn btn-danger btn-sm" id="cancel-btn-${b.id}"
+              onclick="event.preventDefault();event.stopPropagation();startCancel('${b.id}')">
+              Cancel
+            </button>
+            <div id="cancel-confirm-${b.id}" style="display:none;text-align:right">
+              <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.35rem;white-space:nowrap">Sure?</div>
+              <div style="display:flex;gap:0.35rem">
+                <button class="btn btn-danger btn-sm"
+                  onclick="event.preventDefault();event.stopPropagation();confirmCancel('${b.id}')">Yes</button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="event.preventDefault();event.stopPropagation();abortCancel('${b.id}')">No</button>
+              </div>
+            </div>` : ''}
+        </div>
+      </a>`;
+  }).join('');
+}
+
+function startCancel(id) {
+  document.getElementById(`cancel-btn-${id}`).style.display = 'none';
+  document.getElementById(`cancel-confirm-${id}`).style.display = '';
+}
+function abortCancel(id) {
+  document.getElementById(`cancel-btn-${id}`).style.display = '';
+  document.getElementById(`cancel-confirm-${id}`).style.display = 'none';
+}
+async function confirmCancel(id) {
+  const data = await apiFetch(`/bookings/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ status: 'CANCELLED', reason: 'Cancelled by customer' }),
+  });
+  if (data?.success) {
+    showToast('Booking cancelled', 'success');
+    const b = allBookings.find(b => b.id === id);
+    if (b) b.status = 'CANCELLED';
+    renderStats();
+    renderBookings(currentFilter);
+  } else {
+    showToast('Failed to cancel booking', 'error');
+    abortCancel(id);
+  }
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

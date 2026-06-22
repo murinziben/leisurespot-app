@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}Booking Detail — LeisureSpot{% endblock %}
+
+{% block content %}
+<div style="background:var(--teal);padding:2.5rem 0">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+      <a href="/dashboard" style="display:inline-flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.7);font-size:0.875rem;text-decoration:none;transition:color 0.15s"
+        onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">
+        <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Dashboard
+      </a>
+      <span style="color:rgba(255,255,255,0.4)">/</span>
+      <span style="color:white;font-size:0.875rem">Booking Detail</span>
+    </div>
+    <h1 style="color:white;font-size:1.75rem">Booking Detail</h1>
+  </div>
+</div>
+
+<div class="container" style="padding-top:2.5rem;padding-bottom:5rem;max-width:860px">
+  <div id="booking-detail">
+    <div class="loading-state"><div class="spinner"></div><p>Loading booking…</p></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const BOOKING_ID = "{{ booking_id }}";
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('en-BW', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+  const data = await apiFetch(`/bookings/${BOOKING_ID}`);
+  if (!data?.success) {
+    document.getElementById('booking-detail').innerHTML = `
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <h3>Booking not found</h3>
+        <p>This booking may have been removed or you don't have access to it.</p>
+        <a href="/dashboard" class="btn btn-primary mt-2">Back to Dashboard</a>
+      </div>`;
+    return;
+  }
+
+  const b = data.data;
+  const img = b.listing_image || 'https://images.unsplash.com/photo-1577971132997-c10be9372519?w=600&h=400&fit=crop';
+  const canCancel = ['PENDING','CONFIRMED'].includes(b.status);
+  const bookingDate = new Date(b.booking_date + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const reviewEligible = b.status === 'COMPLETED' && bookingDate < today;
+
+  document.getElementById('booking-detail').innerHTML = `
+    <!-- Status bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:0.75rem">
+      <div>
+        <div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:0.25rem">Booking Reference</div>
+        <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text-primary)">#${b.id.slice(0,8).toUpperCase()}</div>
+      </div>
+      ${getStatusBadge(b.status)}
+    </div>
+
+    <!-- Experience + Details grid -->
+    <div class="booking-detail-grid">
+      <!-- Experience card -->
+      <div class="card">
+        <img src="${img}" alt="${esc(b.listing_title || '')}"
+          style="width:100%;height:180px;object-fit:cover;display:block"
+          onerror="this.src='https://images.unsplash.com/photo-1577971132997-c10be9372519?w=600&h=400&fit=crop'">
+        <div class="card-body">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:0.75rem">${esc(b.listing_title || 'Experience')}</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <a href="/listing/${b.listing_id}" class="btn btn-outline btn-sm w-full" style="justify-content:center">
+              View Listing
+            </a>
+            ${b.status === 'COMPLETED' || b.status === 'CANCELLED' ? `
+            <a href="/book/${b.listing_id}" class="btn btn-primary btn-sm w-full"
+              style="justify-content:center;display:flex;align-items:center;gap:0.4rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.91"/>
+              </svg>
+              Book Again
+            </a>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Details card -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:1rem">Booking Details</h3>
+          <div style="display:flex;flex-direction:column;gap:0;font-size:0.875rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Date</span>
+              <strong>${formatDate(b.booking_date)}</strong>
+            </div>
+            ${b.start_time ? `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Start Time</span>
+              <strong>${b.start_time}</strong>
+            </div>` : ''}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Guests</span>
+              <strong>${b.guests} guest${b.guests !== 1 ? 's' : ''}</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Total Amount</span>
+              <strong style="color:var(--teal)">BWP ${(b.total_amount||0).toLocaleString()}</strong>
+            </div>
+            ${b.confirmed_at ? `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Confirmed</span>
+              <strong>${new Date(b.confirmed_at).toLocaleDateString('en-BW',{day:'numeric',month:'short',year:'numeric'})}</strong>
+            </div>` : ''}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0">
+              <span style="color:var(--text-secondary)">Booked on</span>
+              <span>${new Date(b.created_at).toLocaleDateString('en-BW',{day:'numeric',month:'short',year:'numeric'})}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${b.special_requests ? `
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-body">
+        <h3 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:0.625rem">Special Requests</h3>
+        <p style="font-size:0.9rem;color:var(--text-primary);line-height:1.6">${esc(b.special_requests)}</p>
+      </div>
+    </div>` : ''}
+
+    ${b.payment ? `
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-body">
+        <h3 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:1rem">Payment</h3>
+        <div style="font-size:0.875rem;display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid var(--border-color)">
+            <span style="color:var(--text-secondary)">Amount</span>
+            <span>BWP ${(b.payment.amount||0).toLocaleString()}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0${b.payment.paid_at ? ';border-bottom:1px solid var(--border-color)' : ''}">
+            <span style="color:var(--text-secondary)">Status</span>
+            ${getStatusBadge(b.payment.status)}
+          </div>
+          ${b.payment.paid_at ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0">
+            <span style="color:var(--text-secondary)">Paid at</span>
+            <span>${new Date(b.payment.paid_at).toLocaleString('en-BW',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${b.cancellation_reason ? `
+    <div class="alert alert-warning" style="margin-bottom:1.25rem">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <span><strong>Cancellation reason:</strong> ${esc(b.cancellation_reason)}</span>
+    </div>` : ''}
+
+    ${canCancel ? `
+    <div style="padding-top:0.5rem">
+      <div id="cancel-default">
+        <button class="btn btn-danger" onclick="showCancelConfirm()">Cancel Booking</button>
+      </div>
+      <div id="cancel-confirm" style="display:none" class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:1rem">
+          <div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Cancel this booking?</div>
+            <div style="font-size:0.875rem;color:var(--text-secondary)">This action cannot be undone. The vendor will be notified.</div>
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <button class="btn btn-danger" onclick="confirmCancel('${b.id}')">Yes, Cancel Booking</button>
+            <button class="btn btn-ghost" onclick="hideCancelConfirm()">Keep Booking</button>
+          </div>
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+
+  // Load review section for completed past bookings
+  if (reviewEligible) {
+    await loadReviewSection(b);
+  }
+});
+
+// ── Review section ──────────────────────────────────────────────────────────
+
+let _reviewRating = 0;
+
+async function loadReviewSection(b) {
+  const container = document.createElement('div');
+  container.id = 'review-section';
+  container.style.marginTop = '1.25rem';
+  document.getElementById('booking-detail').appendChild(container);
+
+  // Check if already reviewed
+  const res = await apiFetch(`/reviews/booking/${b.id}`);
+  const existing = res?.data;
+
+  if (existing) {
+    renderExistingReview(container, existing);
+  } else {
+    renderReviewForm(container, b);
+  }
+}
+
+function renderExistingReview(container, review) {
+  const stars = [1,2,3,4,5].map(i =>
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="${i <= review.rating ? '#E8711A' : 'none'}" stroke="${i <= review.rating ? '#E8711A' : '#d1d5db'}" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <h3 style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin:0">Your Review</h3>
+          <span style="font-size:0.75rem;color:var(--text-secondary)">${new Date(review.created_at).toLocaleDateString('en-BW',{day:'numeric',month:'short',year:'numeric'})}</span>
+        </div>
+        <div style="display:flex;gap:2px;margin-bottom:0.875rem">${stars}</div>
+        ${review.comment ? `<p style="font-size:0.9rem;color:var(--text-primary);line-height:1.65;margin:0">"${esc(review.comment)}"</p>` : ''}
+        <div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid var(--border-color);display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--success)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          Review submitted — thank you for your feedback!
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderReviewForm(container, b) {
+  _reviewRating = 0;
+  container.innerHTML = `
+    <div class="card" id="review-card">
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:0.25rem">How was your experience?</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin:0">Your feedback helps other travellers discover great experiences.</p>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:0.5rem 0.875rem;font-size:0.78rem;color:#92400e;white-space:nowrap;display:flex;align-items:center;gap:0.4rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Review pending
+          </div>
+        </div>
+
+        <!-- Star picker -->
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);margin-bottom:0.625rem">Rating *</div>
+          <div id="star-picker" style="display:flex;gap:6px">
+            ${[1,2,3,4,5].map(i => `
+              <button type="button" id="star-${i}" onclick="setRating(${i})" onmouseenter="hoverRating(${i})" onmouseleave="resetStarHover()"
+                style="background:none;border:none;cursor:pointer;padding:2px;border-radius:4px;transition:transform 0.1s" aria-label="${i} star${i>1?'s':''}">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;transition:fill 0.1s,stroke 0.1s">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </button>`).join('')}
+          </div>
+          <div id="rating-label" style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.4rem;min-height:1.2em"></div>
+        </div>
+
+        <!-- Comment -->
+        <div style="margin-bottom:1.25rem">
+          <label style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);display:block;margin-bottom:0.5rem">
+            Tell us more (optional)
+          </label>
+          <textarea id="review-comment" class="form-control" rows="3"
+            placeholder="What made this experience special? Any tips for other guests?"
+            style="resize:vertical;min-height:80px"></textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:0.875rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="submitReview('${b.id}','${b.listing_id}')" id="review-submit-btn">
+            Submit Review
+          </button>
+          <span style="font-size:0.78rem;color:var(--text-secondary)">Reviews are public and help the community.</span>
+        </div>
+        <div id="review-error" style="display:none;margin-top:0.75rem;font-size:0.8rem;color:var(--danger)"></div>
+      </div>
+    </div>`;
+}
+
+const RATING_LABELS = ['','Poor','Fair','Good','Great','Excellent!'];
+
+function hoverRating(n) {
+  paintStars(n, true);
+  document.getElementById('rating-label').textContent = RATING_LABELS[n];
+}
+function resetStarHover() {
+  paintStars(_reviewRating, false);
+  document.getElementById('rating-label').textContent = _reviewRating ? RATING_LABELS[_reviewRating] : '';
+}
+function setRating(n) {
+  _reviewRating = n;
+  paintStars(n, false);
+  document.getElementById('rating-label').textContent = RATING_LABELS[n];
+  document.getElementById('review-error').style.display = 'none';
+}
+function paintStars(n, hover) {
+  [1,2,3,4,5].forEach(i => {
+    const svg = document.querySelector(`#star-${i} svg`);
+    if (!svg) return;
+    const filled = i <= n;
+    svg.setAttribute('fill',   filled ? (hover ? '#f59e0b' : '#E8711A') : 'none');
+    svg.setAttribute('stroke', filled ? (hover ? '#f59e0b' : '#E8711A') : '#d1d5db');
+    document.getElementById(`star-${i}`).style.transform = (filled && hover) ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+async function submitReview(bookingId, listingId) {
+  const errEl = document.getElementById('review-error');
+  if (!_reviewRating) {
+    errEl.style.display = '';
+    errEl.textContent = 'Please select a star rating before submitting.';
+    return;
+  }
+
+  const btn = document.getElementById('review-submit-btn');
+  btn.classList.add('btn-loading');
+  btn.disabled = true;
+
+  const comment = document.getElementById('review-comment').value.trim();
+  const res = await apiFetch('/reviews', {
+    method: 'POST',
+    body: JSON.stringify({ booking_id: bookingId, listing_id: listingId, rating: _reviewRating, comment: comment || null }),
+  });
+
+  btn.classList.remove('btn-loading');
+  btn.disabled = false;
+
+  if (res?.success) {
+    showToast('Review submitted — thank you!', 'success');
+    const container = document.getElementById('review-section');
+    renderExistingReview(container, { rating: _reviewRating, comment, created_at: new Date().toISOString() });
+  } else {
+    errEl.style.display = '';
+    errEl.textContent = res?.detail || 'Failed to submit review. Please try again.';
+  }
+}
+
+function showCancelConfirm() {
+  document.getElementById('cancel-default').style.display = 'none';
+  document.getElementById('cancel-confirm').style.display = '';
+}
+function hideCancelConfirm() {
+  document.getElementById('cancel-default').style.display = '';
+  document.getElementById('cancel-confirm').style.display = 'none';
+}
+async function confirmCancel(id) {
+  const data = await apiFetch(`/bookings/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ status: 'CANCELLED', reason: 'Cancelled by customer' }),
+  });
+  if (data?.success) {
+    showToast('Booking cancelled', 'success');
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    showToast('Failed to cancel booking', 'error');
+    hideCancelConfirm();
+  }
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

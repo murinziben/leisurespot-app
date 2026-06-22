@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Vendors — Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('vendors') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Vendors</h1>
+      <p class="dashboard-subtitle">Manage all vendor accounts and applications</p>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="vendor-search" placeholder="Search by name or email…"
+        style="flex:1;min-width:200px;height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;outline:none"
+        onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-color)'"
+        onkeydown="if(event.key==='Enter')loadAdminVendors(1)">
+      <select id="vendor-status-filter" onchange="loadAdminVendors(1)"
+        style="height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;background:white;outline:none">
+        <option value="">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+      <button onclick="loadAdminVendors(1)" class="btn btn-primary" style="height:40px">Filter</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Business Name</th>
+            <th>Email</th>
+            <th>City</th>
+            <th>Listings</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vendors-table-body">
+          <tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="vendors-pagination" style="margin-top:1rem"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.__adminPage = 'vendors';
+// Pre-apply status filter from URL
+const _qs = new URLSearchParams(window.location.search);
+if (_qs.get('status')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('vendor-status-filter');
+    if (el) el.value = _qs.get('status');
+  });
+}
+</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

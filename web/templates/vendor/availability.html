@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block title %}Availability Calendar — LeisureSpot{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Calendar grid ─────────────────────────────────── */
+.cal-wrap{background:white;border-radius:16px;border:1px solid var(--border-color);box-shadow:0 1px 4px rgba(0,0,0,.05);max-width:560px}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border-color)}
+.cal-header h2{font-size:1rem;font-weight:700;color:var(--text-primary);margin:0}
+.cal-nav{width:34px;height:34px;border-radius:8px;border:1px solid var(--border-color);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:all .15s}
+.cal-nav:hover{border-color:var(--teal);color:var(--teal);background:#f0f8fb}
+.cal-nav:disabled{opacity:.35;cursor:default;pointer-events:none}
+.cal-grid{padding:1rem 1.25rem 1.5rem}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+.cal-dow-cell{text-align:center;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);padding:.35rem 0}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:8px;border:1.5px solid transparent;background:white;cursor:pointer;font-size:.8rem;font-weight:500;color:var(--text-primary);display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative;user-select:none}
+.cal-day:hover:not(.cal-day-past):not(.cal-day-empty){border-color:var(--teal);background:#f0f8fb}
+.cal-day-past{color:#d1d5db;cursor:default;background:#fafafa}
+.cal-day-today{border-color:var(--teal)!important;font-weight:800;color:var(--teal)}
+.cal-day-empty{background:transparent;cursor:default;border:none}
+.cal-day-blocked{background:#fee2e2!important;border-color:#fca5a5!important;color:#991b1b!important}
+.cal-day-blocked::after{content:'✕';position:absolute;top:2px;right:4px;font-size:.55rem;color:#fca5a5}
+.cal-day-available-future{border:1.5px solid #e5e7eb}
+
+/* ── Legend ────────────────────────────────────────── */
+.cal-legend{display:flex;gap:1.25rem;flex-wrap:wrap;padding:0 1.5rem 1.25rem;font-size:.78rem;color:var(--text-secondary)}
+.legend-item{display:flex;align-items:center;gap:.4rem}
+.legend-dot{width:14px;height:14px;border-radius:4px;border:1.5px solid}
+.legend-avail{background:white;border-color:#e5e7eb}
+.legend-blocked{background:#fee2e2;border-color:#fca5a5}
+.legend-today{background:white;border-color:var(--teal)}
+.legend-past{background:#fafafa;border-color:transparent}
+
+/* ── Listing selector ──────────────────────────────── */
+.listing-selector-wrap{background:white;border-radius:16px;border:1px solid var(--border-color);padding:1.25rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.listing-selector-wrap label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);display:block;margin-bottom:.5rem}
+
+/* ── Blocked dates list ────────────────────────────── */
+.blocked-list-wrap{background:white;border-radius:16px;border:1px solid var(--border-color);padding:1.25rem 1.5rem;margin-top:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.blocked-list-wrap h3{font-size:.875rem;font-weight:700;color:var(--text-primary);margin-bottom:.875rem;display:flex;align-items:center;gap:.4rem}
+.blocked-date-chip{display:inline-flex;align-items:center;gap:.375rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:100px;font-size:.75rem;font-weight:600;padding:3px 10px;cursor:pointer;transition:background .15s}
+.blocked-date-chip:hover{background:#fecaca}
+.blocked-date-chip svg{flex-shrink:0}
+.blocked-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+      <span>Vendor Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/vendor/dashboard"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+      <a href="/vendor/listings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-list"      style="width:17px;height:17px"></i></span> Listings</a>
+      <a href="/vendor/listings/new" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="plus-circle"     style="width:17px;height:17px"></i></span> New Listing</a>
+      <a href="/vendor/bookings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar"        style="width:17px;height:17px"></i></span> Bookings</a>
+      <a href="/vendor/availability" class="sidebar-link active"><span class="sidebar-icon"><i data-lucide="calendar-x" style="width:17px;height:17px"></i></span> Availability</a>
+      <a href="/vendor/profile"      class="sidebar-link"><span class="sidebar-icon"><i data-lucide="settings"        style="width:17px;height:17px"></i></span> Profile</a>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+      <a href="/dashboard"           class="sidebar-link"><span class="sidebar-icon"><i data-lucide="user"            style="width:17px;height:17px"></i></span> My Account</a>
+      <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+        <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+      </button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Availability Calendar</h1>
+      <p class="dashboard-subtitle">Block dates when your listing is unavailable — customers won't be able to book those days</p>
+    </div>
+
+    <!-- Listing selector -->
+    <div class="listing-selector-wrap">
+      <label for="listing-select">Select listing</label>
+      <div style="display:flex;align-items:center;gap:.875rem;flex-wrap:wrap">
+        <select id="listing-select" style="flex:1;min-width:220px" onchange="onListingChange(this.value)">
+          <option value="">— Choose a listing —</option>
+        </select>
+        <button id="save-btn" class="btn btn-primary" onclick="saveAvailability()" disabled
+          style="display:flex;align-items:center;gap:.4rem;min-width:140px;justify-content:center">
+          <i data-lucide="save" style="width:15px;height:15px"></i>
+          Save Changes
+        </button>
+      </div>
+      <div id="save-status" style="font-size:.78rem;margin-top:.5rem;display:none"></div>
+    </div>
+
+    <!-- Calendar + blocked list -->
+    <div id="cal-area" style="display:none">
+      <!-- Month calendar -->
+      <div class="cal-wrap">
+        <div class="cal-header">
+          <button class="cal-nav" id="prev-btn" onclick="prevMonth()" aria-label="Previous month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2 id="cal-title">—</h2>
+          <button class="cal-nav" id="next-btn" onclick="nextMonth()" aria-label="Next month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-dow">
+            <div class="cal-dow-cell">Mon</div>
+            <div class="cal-dow-cell">Tue</div>
+            <div class="cal-dow-cell">Wed</div>
+            <div class="cal-dow-cell">Thu</div>
+            <div class="cal-dow-cell">Fri</div>
+            <div class="cal-dow-cell">Sat</div>
+            <div class="cal-dow-cell">Sun</div>
+          </div>
+          <div class="cal-days" id="cal-days"></div>
+        </div>
+        <div class="cal-legend">
+          <div class="legend-item"><div class="legend-dot legend-avail"></div> Available</div>
+          <div class="legend-item"><div class="legend-dot legend-blocked"></div> Blocked</div>
+          <div class="legend-item"><div class="legend-dot legend-today"></div> Today</div>
+          <div class="legend-item"><div class="legend-dot legend-past"></div> Past (locked)</div>
+        </div>
+      </div>
+
+      <!-- Blocked dates chip list -->
+      <div class="blocked-list-wrap">
+        <h3>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Blocked dates
+          <span id="blocked-count" style="font-weight:400;color:var(--text-secondary);font-size:.78rem"></span>
+        </h3>
+        <div id="blocked-chips" class="blocked-chips">
+          <span style="font-size:.8rem;color:var(--text-secondary)">No dates blocked — click dates on the calendar to block them.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state: no listing selected -->
+    <div id="cal-empty" class="empty-state" style="padding:3rem 2rem">
+      <div class="empty-icon">
+        <i data-lucide="calendar-x" style="width:48px;height:48px"></i>
+      </div>
+      <h3>Select a listing</h3>
+      <p>Choose one of your listings above to manage its availability calendar.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let _year  = 0;
+let _month = 0;      // 0-indexed
+let _blocked = new Set();   // Set of 'YYYY-MM-DD' strings
+let _listingId = null;
+let _dirty = false;
+
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+// ── Init ────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+
+  const now = new Date();
+  _year  = now.getFullYear();
+  _month = now.getMonth();
+
+  // Load vendor listings for selector
+  const data = await apiFetch('/listings/my');
+  if (!data?.success || !data.data.length) {
+    document.getElementById('cal-empty').innerHTML = `
+      <div class="empty-state" style="padding:3rem 2rem">
+        <div class="empty-icon"><i data-lucide="layout-list" style="width:48px;height:48px"></i></div>
+        <h3>No listings yet</h3>
+        <p>Create a listing first before managing availability.</p>
+        <a href="/vendor/listings/new" class="btn btn-primary mt-2">Create Listing</a>
+      </div>`;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  const sel = document.getElementById('listing-select');
+  data.data.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.title;
+    sel.appendChild(opt);
+  });
+
+  if (window.lucide) lucide.createIcons();
+});
+
+// ── Listing change ──────────────────────────────────────
+
+async function onListingChange(id) {
+  if (!id) {
+    document.getElementById('cal-area').style.display = 'none';
+    document.getElementById('cal-empty').style.display = '';
+    return;
+  }
+  if (_dirty && !confirm('You have unsaved changes. Discard them?')) {
+    document.getElementById('listing-select').value = _listingId || '';
+    return;
+  }
+
+  _listingId = id;
+  _dirty = false;
+  document.getElementById('save-btn').disabled = true;
+
+  document.getElementById('cal-empty').style.display = 'none';
+  document.getElementById('cal-area').style.display  = '';
+
+  await loadAvailability(id);
+  renderCalendar();
+}
+
+async function loadAvailability(id) {
+  const res = await apiFetch(`/listings/${id}/availability`);
+  _blocked = new Set(res?.data?.blocked_dates || []);
+  renderChips();
+}
+
+// ── Calendar render ─────────────────────────────────────
+
+function renderCalendar() {
+  const d = new Date(_year, _month, 1);
+  const monthName = d.toLocaleDateString('en-BW', { month: 'long', year: 'numeric' });
+  document.getElementById('cal-title').textContent = monthName;
+
+  // Disable prev if already at current month
+  const now = new Date();
+  document.getElementById('prev-btn').disabled =
+    _year === now.getFullYear() && _month === now.getMonth();
+
+  // Start weekday (Mon = 0)
+  let startDow = d.getDay() - 1; // JS Sunday=0 → Mon=0
+  if (startDow < 0) startDow = 6;
+
+  const daysInMonth = new Date(_year, _month + 1, 0).getDate();
+  const cells = [];
+
+  // Empty padding cells
+  for (let i = 0; i < startDow; i++) {
+    cells.push(`<div class="cal-day cal-day-empty"></div>`);
+  }
+
+  // Day cells
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${_year}-${String(_month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cellDate = new Date(_year, _month, day);
+    const isPast    = cellDate < TODAY;
+    const isToday   = cellDate.getTime() === TODAY.getTime();
+    const isBlocked = _blocked.has(dateStr);
+
+    let cls = 'cal-day';
+    if (isPast && !isToday)  cls += ' cal-day-past';
+    if (isToday)             cls += ' cal-day-today';
+    if (isBlocked)           cls += ' cal-day-blocked';
+    if (!isPast && !isBlocked) cls += ' cal-day-available-future';
+
+    const clickable = !isPast || isToday;
+    const onclick   = clickable ? `onclick="toggleDate('${dateStr}')"` : '';
+    const title     = isBlocked ? 'Click to unblock this date' : (clickable ? 'Click to block this date' : 'Past date');
+
+    cells.push(`<div class="${cls}" ${onclick} title="${title}" role="${clickable ? 'button' : ''}" tabindex="${clickable ? 0 : -1}">${day}</div>`);
+  }
+
+  document.getElementById('cal-days').innerHTML = cells.join('');
+}
+
+function prevMonth() {
+  if (_month === 0) { _year--; _month = 11; }
+  else              { _month--; }
+  renderCalendar();
+}
+
+function nextMonth() {
+  if (_month === 11) { _year++; _month = 0; }
+  else               { _month++; }
+  renderCalendar();
+}
+
+// ── Toggle date ─────────────────────────────────────────
+
+function toggleDate(dateStr) {
+  if (_blocked.has(dateStr)) _blocked.delete(dateStr);
+  else                       _blocked.add(dateStr);
+  _dirty = true;
+  document.getElementById('save-btn').disabled = false;
+  renderCalendar();
+  renderChips();
+}
+
+// ── Chips ───────────────────────────────────────────────
+
+function renderChips() {
+  const sorted = [..._blocked].sort();
+  const el = document.getElementById('blocked-chips');
+  const ct = document.getElementById('blocked-count');
+
+  ct.textContent = sorted.length ? `(${sorted.length})` : '';
+
+  if (!sorted.length) {
+    el.innerHTML = `<span style="font-size:.8rem;color:var(--text-secondary)">No dates blocked — click dates on the calendar to block them.</span>`;
+    return;
+  }
+
+  el.innerHTML = sorted.map(d => `
+    <span class="blocked-date-chip" onclick="toggleDate('${d}')" title="Click to unblock">
+      ${formatDateShort(d)}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </span>
+  `).join('');
+}
+
+// ── Save ────────────────────────────────────────────────
+
+async function saveAvailability() {
+  if (!_listingId) return;
+  const btn = document.getElementById('save-btn');
+  const statusEl = document.getElementById('save-status');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner" style="width:15px;height:15px;margin:0"></div> Saving…`;
+
+  const res = await apiFetch(`/listings/${_listingId}/availability`, {
+    method: 'POST',
+    body: JSON.stringify({ blocked_dates: [..._blocked] }),
+  });
+
+  btn.innerHTML = `<i data-lucide="save" style="width:15px;height:15px"></i> Save Changes`;
+  if (window.lucide) lucide.createIcons();
+
+  if (res?.success) {
+    _dirty = false;
+    statusEl.style.display = '';
+    statusEl.style.color   = 'var(--success)';
+    statusEl.textContent   = `✓ Saved ${new Date().toLocaleTimeString('en-BW',{hour:'2-digit',minute:'2-digit'})}`;
+    showToast('Availability saved!', 'success');
+    setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+  } else {
+    btn.disabled = false;
+    statusEl.style.display = '';
+    statusEl.style.color   = 'var(--danger)';
+    statusEl.textContent   = res?.detail || 'Failed to save — please try again.';
+    showToast('Failed to save availability', 'error');
+  }
+}
+
+// ── Helper ──────────────────────────────────────────────
+
+function formatDateShort(str) {
+  try {
+    return new Date(str + 'T00:00:00').toLocaleDateString('en-BW', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return str; }
+}
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', e => {
+  if (_dirty) { e.preventDefault(); e.returnValue = ''; }
+});
+</script>
+{% endblock %}

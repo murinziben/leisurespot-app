@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block title %}Account Settings — LeisureSpot{% endblock %}
+
+{% block content %}
+<div style="background:var(--teal);padding:2.5rem 0">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+      <a href="/dashboard" style="display:inline-flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.7);font-size:0.875rem;text-decoration:none;transition:color 0.15s"
+        onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">
+        <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Dashboard
+      </a>
+      <span style="color:rgba(255,255,255,0.4)">/</span>
+      <span style="color:white;font-size:0.875rem">Account Settings</span>
+    </div>
+    <h1 style="color:white;font-size:1.75rem" id="page-greeting">Account Settings</h1>
+    <p style="color:rgba(255,255,255,0.65);margin-top:0.25rem;font-size:0.875rem">Manage your personal information and security</p>
+  </div>
+</div>
+
+<div class="container" style="padding-top:2.5rem;padding-bottom:5rem;max-width:960px">
+  <div id="account-content">
+    <div class="loading-state"><div class="spinner"></div><p>Loading account…</p></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+
+  const data = await apiFetch('/auth/me');
+  if (!data?.success) {
+    document.getElementById('account-content').innerHTML =
+      '<div class="alert alert-error">Failed to load account. Please refresh.</div>';
+    return;
+  }
+
+  const u = data.data;
+  const p = u.profile || {};
+  const name = [p.first_name, p.last_name].filter(Boolean).join(' ');
+  if (name) document.getElementById('page-greeting').textContent = `${name}'s Account`;
+
+  document.getElementById('account-content').innerHTML = `
+    <!-- Personal Info (full width) -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-body">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem">
+          <i data-lucide="user" style="width:17px;height:17px;color:var(--teal)"></i>
+          Personal Information
+        </h3>
+        <div id="profile-success" class="alert alert-success" style="display:none;margin-bottom:1rem"></div>
+        <div id="profile-error"   class="alert alert-error"   style="display:none;margin-bottom:1rem"></div>
+        <form id="profile-form">
+          <div class="account-inner-grid">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" name="first_name" value="${esc(p.first_name || '')}" placeholder="Kefilwe">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="last_name" value="${esc(p.last_name || '')}" placeholder="Moeti">
+            </div>
+          </div>
+          <div class="account-inner-grid">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" name="email" value="${esc(u.email || '')}" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phone" value="${esc(p.phone || '')}" placeholder="+267 71 234 567">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:320px">
+            <label class="form-label">City</label>
+            <select name="city">
+              <option value="">— Select your city —</option>
+              ${['Gaborone','Francistown','Maun','Kasane','Lobatse','Selebi-Phikwe','Palapye','Other'].map(c =>
+                `<option value="${c}" ${p.city === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="profile-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Change Password + Account Details side by side -->
+    <div class="account-outer-grid">
+
+      <!-- Change Password -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem">
+            <i data-lucide="lock" style="width:17px;height:17px;color:var(--teal)"></i>
+            Change Password
+          </h3>
+          <div id="pw-success" class="alert alert-success" style="display:none;margin-bottom:1rem"></div>
+          <div id="pw-error"   class="alert alert-error"   style="display:none;margin-bottom:1rem"></div>
+          <form id="password-form">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <div class="input-wrap">
+                <input type="password" name="current_password" id="cur-pw" placeholder="••••••••" required>
+                <button type="button" class="input-right" onclick="togglePw('cur-pw',this)" aria-label="Toggle">
+                  <i data-lucide="eye" style="width:15px;height:15px;pointer-events:none"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <div class="input-wrap">
+                <input type="password" name="new_password" id="new-pw" placeholder="Min 8 characters" required minlength="8">
+                <button type="button" class="input-right" onclick="togglePw('new-pw',this)" aria-label="Toggle">
+                  <i data-lucide="eye" style="width:15px;height:15px;pointer-events:none"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <div class="input-wrap">
+                <input type="password" name="confirm_password" id="conf-pw" placeholder="••••••••" required>
+                <button type="button" class="input-right" onclick="togglePw('conf-pw',this)" aria-label="Toggle">
+                  <i data-lucide="eye" style="width:15px;height:15px;pointer-events:none"></i>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-full" id="pw-btn">Update Password</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Details -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem">
+            <i data-lucide="shield" style="width:17px;height:17px;color:var(--teal)"></i>
+            Account Details
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:0;font-size:0.875rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Account type</span>
+              <span class="badge badge-teal">${u.role || 'CUSTOMER'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Status</span>
+              <span class="badge status-${u.status || 'ACTIVE'}">${u.status || 'ACTIVE'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Email</span>
+              <span style="font-weight:500;font-size:0.8rem;word-break:break-all;text-align:right;max-width:160px">${esc(u.email || '—')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0">
+              <span style="color:var(--text-secondary)">Member since</span>
+              <span>${u.created_at ? new Date(u.created_at).toLocaleDateString('en-BW',{month:'long',year:'numeric'}) : '—'}</span>
+            </div>
+          </div>
+
+          ${u.role === 'CUSTOMER' ? `
+          <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-color)">
+            <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.875rem">Want to list your own experiences?</p>
+            <a href="/vendor/onboarding" class="btn btn-outline btn-sm w-full" style="justify-content:center;gap:0.4rem">
+              <i data-lucide="store" style="width:14px;height:14px"></i> Become a Vendor
+            </a>
+          </div>` : ''}
+
+          <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-color)">
+            <button class="btn btn-ghost btn-sm w-full" style="justify-content:center;color:var(--danger);gap:0.4rem"
+              data-action="logout">
+              <i data-lucide="log-out" style="width:14px;height:14px"></i> Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  if (window.lucide) lucide.createIcons();
+
+  // Profile form
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('profile-btn');
+    const errEl = document.getElementById('profile-error');
+    const sucEl = document.getElementById('profile-success');
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+    const fd = new FormData(e.target);
+    const res = await apiFetch('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        email: fd.get('email') || undefined,
+        profile: {
+          first_name: fd.get('first_name') || null,
+          last_name:  fd.get('last_name')  || null,
+          phone:      fd.get('phone')      || null,
+          city:       fd.get('city')       || null,
+        }
+      }),
+    });
+
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+
+    if (res?.success) {
+      sucEl.textContent = 'Profile updated successfully!';
+      sucEl.style.display = 'flex';
+      await loadCurrentUser();
+      sucEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      errEl.textContent = res?.detail || res?.message || 'Failed to update profile.';
+      errEl.style.display = 'flex';
+    }
+  });
+
+  // Password form
+  document.getElementById('password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('pw-btn');
+    const errEl = document.getElementById('pw-error');
+    const sucEl = document.getElementById('pw-success');
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+    const fd = new FormData(e.target);
+    if (fd.get('new_password') !== fd.get('confirm_password')) {
+      errEl.textContent = 'New passwords do not match.';
+      errEl.style.display = 'flex';
+      btn.classList.remove('btn-loading'); btn.disabled = false;
+      return;
+    }
+
+    const res = await apiFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        current_password: fd.get('current_password'),
+        new_password:     fd.get('new_password'),
+      }),
+    });
+
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+
+    if (res?.success) {
+      sucEl.textContent = 'Password updated successfully!';
+      sucEl.style.display = 'flex';
+      e.target.reset();
+      sucEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      errEl.textContent = res?.detail || res?.message || 'Failed to update password.';
+      errEl.style.display = 'flex';
+    }
+  });
+});
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const hidden = inp.type === 'password';
+  inp.type = hidden ? 'text' : 'password';
+  btn.innerHTML = `<i data-lucide="${hidden ? 'eye-off' : 'eye'}" style="width:15px;height:15px;pointer-events:none"></i>`;
+  if (window.lucide) lucide.createIcons();
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

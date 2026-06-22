@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Revenue — Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('revenue') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Revenue Report</h1>
+      <p class="dashboard-subtitle">Financial overview of platform earnings</p>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="admin-stat-grid" id="revenue-stats" style="grid-template-columns:repeat(3,1fr)">
+      {% for i in range(3) %}<div class="stat-card skeleton" style="height:96px"></div>{% endfor %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem">
+      <!-- Top vendors -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;margin-bottom:1rem">Top Vendors by Revenue</h3>
+          <div class="table-wrapper" style="margin:0">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Vendor</th>
+                  <th>Bookings</th>
+                  <th>Commission</th>
+                </tr>
+              </thead>
+              <tbody id="top-vendors-table">
+                <tr><td colspan="4" style="text-align:center;padding:1.5rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- By category -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;margin-bottom:1rem">Revenue by Category</h3>
+          <div class="table-wrapper" style="margin:0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Bookings</th>
+                  <th>Commission</th>
+                </tr>
+              </thead>
+              <tbody id="by-category-table">
+                <tr><td colspan="3" style="text-align:center;padding:1.5rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__adminPage = 'revenue';</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

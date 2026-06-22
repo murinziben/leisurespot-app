@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}About Us — LeisureSpot{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section style="background:var(--teal);padding:5rem 0 4rem">
+  <div class="container" style="max-width:820px;text-align:center">
+    <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.6);margin-bottom:0.75rem">Our Story</p>
+    <h1 style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);color:white;font-weight:700;margin-bottom:1.25rem;line-height:1.2">
+      Built for Botswana,<br>by Batswana
+    </h1>
+    <p style="font-size:1.05rem;color:rgba(255,255,255,0.8);line-height:1.75;max-width:600px;margin:0 auto">
+      LeisureSpot was founded with one simple belief: Botswana's incredible leisure and tourism experiences deserve a world-class platform.
+    </p>
+  </div>
+</section>
+
+<!-- Mission -->
+<section style="padding:5rem 0;background:white">
+  <div class="container" style="max-width:860px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center">
+      <div>
+        <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--orange);margin-bottom:0.75rem">Our Mission</p>
+        <h2 style="font-family:var(--font-display);font-size:1.875rem;margin-bottom:1.25rem;line-height:1.3">Connecting people to Botswana's best experiences</h2>
+        <p style="color:var(--text-secondary);line-height:1.8;margin-bottom:1rem">
+          We built LeisureSpot to solve a real problem: world-class experiences hidden from the people who want them most — locals and visitors alike. From a morning yoga class in Gaborone to a mokoro safari in the Okavango Delta, we make discovery and booking effortless.
+        </p>
+        <p style="color:var(--text-secondary);line-height:1.8">
+          We also champion Botswana's small business owners. Our vendor tools give independent operators — lodges, guides, chefs, wellness practitioners — the digital infrastructure to grow their businesses and reach more customers.
+        </p>
+      </div>
+      <div style="background:var(--secondary);border-radius:16px;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem">
+        {% for stat in [('500+','Experiences listed'),('120+','Verified vendors'),('15,000+','Happy guests'),('7','Cities covered')] %}
+        <div style="display:flex;align-items:center;gap:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border-color)">
+          <div style="font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--teal);min-width:80px">{{ stat[0] }}</div>
+          <div style="font-size:0.9rem;color:var(--text-secondary)">{{ stat[1] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Values -->
+<section style="padding:5rem 0;background:var(--secondary)">
+  <div class="container" style="max-width:860px">
+    <div style="text-align:center;margin-bottom:3.5rem">
+      <h2 style="font-family:var(--font-display);font-size:1.875rem;margin-bottom:0.75rem">What we stand for</h2>
+      <p style="color:var(--text-secondary)">The values that guide every decision we make</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem">
+      {% for icon,title,desc in [
+        ('map-pin','Local First','We are proudly Batswana. Every feature, every decision is made with Botswana&#39;s people and businesses in mind.'),
+        ('shield','Trust & Safety','Every vendor is verified before listing. We protect customers with secure payments and transparent reviews.'),
+        ('users','Community','We invest in the communities our vendors serve — supporting cultural preservation and responsible tourism.'),
+        ('trending-up','Vendor Success','Our tools are designed so small operators can compete with large hotel chains on a level playing field.'),
+      ] %}
+      <div style="background:white;border-radius:12px;padding:1.75rem;border:1px solid var(--border-color);box-shadow:var(--shadow-card)">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;color:var(--teal);margin-bottom:1rem">
+          <i data-lucide="{{ icon }}" style="width:20px;height:20px"></i>
+        </div>
+        <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:0.5rem">{{ title }}</h3>
+        <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.7">{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:var(--teal);padding:4rem 0">
+  <div class="container" style="text-align:center;max-width:600px">
+    <h2 style="font-family:var(--font-display);font-size:1.75rem;color:white;margin-bottom:1rem">Ready to explore Botswana?</h2>
+    <p style="color:rgba(255,255,255,0.8);margin-bottom:2rem;line-height:1.7">Browse hundreds of curated experiences across all seven cities.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center">
+      <a href="/search" class="btn btn-lg" style="background:white;color:var(--teal);border:none">Browse Experiences</a>
+      <a href="/vendor/onboarding" class="btn btn-lg" style="background:transparent;color:white;border:2px solid rgba(255,255,255,0.5)">List Your Business</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

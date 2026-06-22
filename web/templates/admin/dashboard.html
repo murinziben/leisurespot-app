@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Admin Dashboard — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('dashboard') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Platform Overview</h1>
+      <p class="dashboard-subtitle">LeisureSpot admin dashboard</p>
+    </div>
+
+    <div class="admin-stat-grid" id="admin-stats">
+      {% for i in range(6) %}<div class="stat-card skeleton" style="height:96px"></div>{% endfor %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <h3 style="font-size:1rem">Pending Vendor Applications</h3>
+            <a href="/admin/vendors?status=PENDING" class="btn btn-ghost btn-sm">View all →</a>
+          </div>
+          <div id="pending-vendors-preview"><div class="spinner" style="margin:1rem auto"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;margin-bottom:1rem">Quick Actions</h3>
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <a href="/admin/vendors"    class="btn btn-outline" style="width:100%;display:flex;align-items:center;gap:0.6rem"><i data-lucide="store"        style="width:15px;height:15px"></i> Manage All Vendors</a>
+            <a href="/admin/listings"   class="btn btn-outline" style="width:100%;display:flex;align-items:center;gap:0.6rem"><i data-lucide="layout-list"  style="width:15px;height:15px"></i> Manage Listings</a>
+            <a href="/admin/reviews"    class="btn btn-outline" style="width:100%;display:flex;align-items:center;gap:0.6rem"><i data-lucide="star"          style="width:15px;height:15px"></i> Moderate Reviews</a>
+            <a href="/admin/revenue"    class="btn btn-outline" style="width:100%;display:flex;align-items:center;gap:0.6rem"><i data-lucide="bar-chart-2"   style="width:15px;height:15px"></i> Revenue Report</a>
+            <a href="/admin/categories" class="btn btn-outline" style="width:100%;display:flex;align-items:center;gap:0.6rem"><i data-lucide="tag"           style="width:15px;height:15px"></i> Manage Categories</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__adminPage = 'dashboard';</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

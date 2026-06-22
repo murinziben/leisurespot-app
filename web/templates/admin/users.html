@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Users — Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('users') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Users</h1>
+      <p class="dashboard-subtitle">Manage all platform accounts</p>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="user-search" placeholder="Search by email…"
+        style="flex:1;min-width:200px;height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;outline:none"
+        onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-color)'"
+        onkeydown="if(event.key==='Enter')loadAdminUsers(1)">
+      <select id="user-role-filter" onchange="loadAdminUsers(1)"
+        style="height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;background:white;outline:none">
+        <option value="">All roles</option>
+        <option value="CUSTOMER">Customer</option>
+        <option value="VENDOR">Vendor</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+      <button onclick="loadAdminUsers(1)" class="btn btn-primary" style="height:40px">Filter</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Name / Email</th>
+            <th>Role</th>
+            <th>Verified</th>
+            <th>Last Login</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="users-pagination" style="margin-top:1rem"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__adminPage = 'users';</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

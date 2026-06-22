@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Bookings — Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('bookings') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Bookings</h1>
+      <p class="dashboard-subtitle">All platform bookings</p>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+      <select id="booking-status-filter" onchange="loadAdminBookings(1)"
+        style="height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;background:white;outline:none">
+        <option value="">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Booking ID</th>
+            <th>Customer</th>
+            <th>Listing</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="bookings-table-body">
+          <tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="bookings-pagination" style="margin-top:1rem"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__adminPage = 'bookings';</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

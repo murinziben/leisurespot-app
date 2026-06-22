@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Book Experience — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="booking-page">
+  <div class="container">
+    <div style="margin-bottom:2rem">
+      <a href="/listing/{{ listing_id }}" style="color:var(--text-secondary);font-size:0.875rem">← Back to listing</a>
+    </div>
+    <h1 style="margin-bottom:0.5rem" id="booking-title">Complete Your Booking</h1>
+    <p style="color:var(--text-secondary);margin-bottom:2rem">You're almost there — fill in the details below</p>
+
+    <div class="booking-layout">
+      <!-- Form -->
+      <div>
+        <div id="booking-type-info"></div>
+        <div class="booking-form-card">
+          <h3 style="margin-bottom:1.5rem">Booking Details</h3>
+          <form id="booking-form">
+            <div class="form-group">
+              <label class="form-label">Date *</label>
+              <input type="date" name="booking_date" class="form-control" required
+                     min="{{ '' }}" id="date-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Start Time (optional)</label>
+              <input type="time" name="start_time" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Number of Guests *</label>
+              <input type="number" name="guests" class="form-control" id="guests-input"
+                     value="1" min="1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Special Requests (optional)</label>
+              <textarea name="special_requests" class="form-control" rows="3"
+                        placeholder="Dietary requirements, accessibility needs, special occasions…"></textarea>
+            </div>
+            <div class="divider"></div>
+            <div class="alert alert-info" style="font-size:0.85rem">
+              <span style="display:inline-flex;align-items:center;gap:0.5rem"><i data-lucide="lock" style="width:14px;height:14px;flex-shrink:0"></i> Your payment details are secured. No charge is made until you confirm.</span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-full" style="margin-top:1rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+              Continue to Payment
+              <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div>
+        <div class="booking-summary" id="booking-summary">
+          <div class="skeleton" style="height:200px"></div>
+          <div style="padding:1.5rem">
+            <div class="skeleton" style="height:1.5rem;margin-bottom:1rem"></div>
+            <div class="skeleton" style="height:6rem"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.__listingId = "{{ listing_id }}";
+// Set min date to today
+document.getElementById('date-input').min = new Date().toISOString().split('T')[0];
+</script>
+<script src="/static/js/booking.js"></script>
+{% endblock %}

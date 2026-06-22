@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Sign In — LeisureSpot{% endblock %}
+
+{% block content %}
+<div style="min-height:calc(100vh - var(--nav-height));display:flex;background:var(--secondary)">
+
+  <!-- Left panel -->
+  <div style="width:380px;flex-shrink:0;background:var(--teal);display:none;flex-direction:column;justify-content:space-between;padding:3rem" class="auth-left">
+    <a href="/" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none">
+      <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:white">
+        <i data-lucide="map-pin" style="width:16px;height:16px"></i>
+      </div>
+      <span style="font-family:var(--font-display);font-weight:700;font-size:1.25rem;color:white">LeisureSpot</span>
+    </a>
+    <div>
+      <p style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.55);margin-bottom:1rem">Join 15,000+ explorers</p>
+      <h2 style="font-family:var(--font-display);font-size:1.75rem;color:white;line-height:1.3;margin-bottom:1.5rem">Discover Botswana's best leisure experiences</h2>
+      <ul style="display:flex;flex-direction:column;gap:0.875rem">
+        {% for item in ['Book safaris, wellness, sports & more','Instant booking confirmation','Secure payments in BWP','Trusted local providers'] %}
+        <li style="display:flex;align-items:center;gap:0.875rem;font-size:0.875rem;color:rgba(255,255,255,0.82)">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white">
+            <i data-lucide="check" style="width:11px;height:11px"></i>
+          </div>
+          {{item}}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:1.25rem">
+      <p style="font-size:0.875rem;font-style:italic;color:rgba(255,255,255,0.82);margin-bottom:0.75rem">"Booked an incredible Okavango Delta tour in 5 minutes. Best platform for Botswana experiences!"</p>
+      <p style="font-size:0.75rem;font-weight:600;color:white">Kefilwe M. — Gaborone</p>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.5rem">
+    <a href="/" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:2rem;text-decoration:none;align-self:flex-start;max-width:460px;width:100%;color:var(--text-secondary);font-size:0.875rem">
+      <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+      Back to Home
+    </a>
+
+    <div style="width:100%;max-width:460px;background:white;border-radius:16px;padding:2.5rem;box-shadow:var(--shadow-card);border:1px solid var(--border-color)">
+
+      <!-- Tabs -->
+      <div style="display:flex;background:var(--secondary);border-radius:10px;padding:4px;margin-bottom:2rem">
+        <a href="/login"    style="flex:1;text-align:center;padding:0.5rem;font-size:0.875rem;font-weight:600;border-radius:8px;background:white;color:var(--teal);box-shadow:var(--shadow-card);text-decoration:none;font-family:var(--font-display)">Sign In</a>
+        <a href="/register" style="flex:1;text-align:center;padding:0.5rem;font-size:0.875rem;font-weight:600;border-radius:8px;background:transparent;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display)">Create Account</a>
+      </div>
+
+      <div id="login-error" class="alert alert-error" style="display:none;margin-bottom:1rem"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" placeholder="kefilwe@example.com" required autofocus>
+        </div>
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+            <label class="form-label" style="margin:0">Password</label>
+            <a href="/forgot-password" style="font-size:0.8rem;color:var(--teal);font-weight:500">Forgot Password?</a>
+          </div>
+          <div class="input-wrap">
+            <input type="password" name="password" id="login-password" placeholder="••••••••" required>
+            <button type="button" class="input-right" id="pw-toggle-btn" onclick="togglePw('login-password', this)" aria-label="Toggle password">
+              <i data-lucide="eye" style="width:16px;height:16px;pointer-events:none"></i>
+            </button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;color:var(--text-secondary)">
+            <input type="checkbox" style="width:auto;accent-color:var(--teal)"> Remember me
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" id="login-btn" style="width:100%">Sign In</button>
+      </form>
+
+      <div style="display:flex;align-items:center;gap:1rem;margin:1.5rem 0">
+        <div style="flex:1;height:1px;background:var(--border-color)"></div>
+        <span style="font-size:0.75rem;color:var(--text-secondary)">Demo accounts</span>
+        <div style="flex:1;height:1px;background:var(--border-color)"></div>
+      </div>
+
+      <div style="background:var(--secondary);border-radius:8px;padding:0.875rem;font-size:0.78rem;color:var(--text-secondary);line-height:1.8">
+        <div><strong style="color:var(--text-primary)">Customer:</strong> demo.customer@leisurespot.co.bw / Customer@Demo2024!</div>
+        <div><strong style="color:var(--text-primary)">Vendor:</strong> okavango@leisurespot.co.bw / Vendor@Demo2024!</div>
+        <div><strong style="color:var(--text-primary)">Admin:</strong> admin@leisurespot.co.bw / Admin@LeisureSpot2024!</div>
+      </div>
+
+      <p style="text-align:center;font-size:0.875rem;color:var(--text-secondary);margin-top:1.25rem">
+        Don't have an account? <a href="/register" style="color:var(--teal);font-weight:600">Create Account</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden
+    ? '<i data-lucide="eye-off" style="width:16px;height:16px;pointer-events:none"></i>'
+    : '<i data-lucide="eye"     style="width:16px;height:16px;pointer-events:none"></i>';
+  if (window.lucide) lucide.createIcons();
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  btn.classList.add('btn-loading'); btn.disabled = true;
+  errEl.style.display = 'none';
+
+  const fd = new FormData(e.target);
+  const data = await apiFetch('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') }),
+  });
+
+  btn.classList.remove('btn-loading'); btn.disabled = false;
+
+  if (data?.access_token) {
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    const user = await loadCurrentUser();
+    const next = new URLSearchParams(window.location.search).get('next');
+    const role = user?.role || window.__currentUser?.role;
+    if (next) {
+      window.location.href = next;
+    } else if (role === 'ADMIN') {
+      window.location.href = '/admin/dashboard';
+    } else if (role === 'VENDOR') {
+      window.location.href = '/vendor/dashboard';
+    } else {
+      window.location.href = '/dashboard';
+    }
+  } else {
+    errEl.textContent = data?.detail || 'Invalid email or password';
+    errEl.style.display = 'flex';
+  }
+});
+
+if (window.innerWidth >= 1024) {
+  const left = document.querySelector('.auth-left');
+  left.style.display = 'flex';
+  left.style.flexDirection = 'column';
+}
+</script>
+{% endblock %}

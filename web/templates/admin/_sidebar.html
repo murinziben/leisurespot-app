@@ -1,0 +1,23 @@
+{% macro admin_sidebar(active) %}
+<aside class="sidebar">
+  <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+    <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+    <span>Admin Panel</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"  class="sidebar-link {% if active == 'dashboard'  %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+    <a href="/admin/users"      class="sidebar-link {% if active == 'users'      %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="users"            style="width:17px;height:17px"></i></span> Users</a>
+    <a href="/admin/vendors"    class="sidebar-link {% if active == 'vendors'    %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="store"            style="width:17px;height:17px"></i></span> Vendors</a>
+    <a href="/admin/listings"   class="sidebar-link {% if active == 'listings'   %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="layout-list"      style="width:17px;height:17px"></i></span> Listings</a>
+    <a href="/admin/bookings"   class="sidebar-link {% if active == 'bookings'   %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="calendar"         style="width:17px;height:17px"></i></span> Bookings</a>
+    <a href="/admin/reviews"    class="sidebar-link {% if active == 'reviews'    %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="star"             style="width:17px;height:17px"></i></span> Reviews</a>
+    <a href="/admin/categories" class="sidebar-link {% if active == 'categories' %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="tag"              style="width:17px;height:17px"></i></span> Categories</a>
+    <a href="/admin/revenue"    class="sidebar-link {% if active == 'revenue'    %}active{% endif %}"><span class="sidebar-icon"><i data-lucide="bar-chart-2"      style="width:17px;height:17px"></i></span> Revenue</a>
+    <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+    <a href="/" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="globe" style="width:17px;height:17px"></i></span> View Site</a>
+    <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+      <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+    </button>
+  </nav>
+</aside>
+{% endmacro %}

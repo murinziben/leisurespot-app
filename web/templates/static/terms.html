@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service — LeisureSpot{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section style="background:var(--teal);padding:4rem 0 3rem">
+  <div class="container" style="max-width:720px;text-align:center">
+    <h1 style="font-family:var(--font-display);font-size:clamp(1.75rem,4vw,2.75rem);color:white;font-weight:700;margin-bottom:0.75rem">Terms of Service</h1>
+    <p style="font-size:0.9rem;color:rgba(255,255,255,0.65)">Last updated: January 2026</p>
+  </div>
+</section>
+
+<section style="padding:4rem 0 6rem;background:white">
+  <div class="container" style="max-width:760px">
+
+    <!-- Quick-nav -->
+    <div style="background:var(--secondary);border-radius:12px;padding:1.5rem;margin-bottom:3rem;border:1px solid var(--border-color)">
+      <p style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);margin-bottom:0.75rem">Contents</p>
+      <ol style="display:flex;flex-direction:column;gap:0.45rem;padding-left:1.25rem">
+        {% for title in ['Acceptance of Terms','Use of the Platform','User Accounts','Bookings & Payments','Vendor Terms','Cancellations & Refunds','Prohibited Conduct','Intellectual Property','Limitation of Liability','Governing Law','Changes to Terms','Contact'] %}
+        <li style="font-size:0.875rem"><a href="#section-{{ loop.index }}" style="color:var(--teal);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ title }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    <p style="color:var(--text-secondary);line-height:1.85;margin-bottom:2.5rem">
+      These Terms of Service ("Terms") govern your use of the LeisureSpot platform operated by <strong>LeisureSpot Botswana (Pty) Ltd</strong> ("LeisureSpot", "we", "us", or "our"). By accessing or using our platform, you agree to be bound by these Terms. If you do not agree, please do not use the platform.
+    </p>
+
+    {% set sections = [
+      (1,'Acceptance of Terms','By creating an account or making a booking, you confirm that:',
+        [
+          'You are at least 18 years of age, or have parental/guardian consent if between 13 and 18.',
+          'You have read, understood, and agree to these Terms and our Privacy Policy.',
+          'You have the legal authority to enter into a binding agreement.',
+          'The information you provide is accurate, current, and complete.',
+        ]
+      ),
+      (2,'Use of the Platform','LeisureSpot provides a marketplace connecting customers with leisure experience vendors in Botswana.',
+        [
+          'The platform is provided for personal, non-commercial use unless you are a registered vendor.',
+          'You may browse, search, and book experiences listed by verified vendors.',
+          'LeisureSpot acts as an intermediary — we are not the provider of the experiences listed.',
+          'Availability and pricing of experiences are set by vendors and may change without notice.',
+          'We reserve the right to modify, suspend, or discontinue any part of the platform at any time.',
+        ]
+      ),
+      (3,'User Accounts','You are responsible for maintaining the security of your account.',
+        [
+          'You must provide accurate information when registering and keep it up to date.',
+          'You are responsible for all activity that occurs under your account.',
+          'You must notify us immediately at <strong>hello@leisurespot.co.bw</strong> if you suspect unauthorised access.',
+          'We reserve the right to suspend or terminate accounts that violate these Terms.',
+          'You may not create more than one personal customer account.',
+        ]
+      ),
+      (4,'Bookings & Payments','All bookings made through LeisureSpot are subject to the following conditions.',
+        [
+          'A booking is confirmed only after payment has been successfully processed and you receive a confirmation email.',
+          'Prices are displayed in Botswana Pula (BWP) and include applicable taxes unless stated otherwise.',
+          'A platform service fee of up to 10% is added to each booking to support platform operations.',
+          'Payment is processed securely by our third-party payment partner. We do not store full card details.',
+          'For "Request" booking types, payment is only charged once the vendor confirms your booking.',
+          'LeisureSpot is not responsible for experiences that fail to meet expectations — disputes should be raised within 48 hours of the experience date.',
+        ]
+      ),
+      (5,'Vendor Terms','Vendors who list experiences on LeisureSpot agree to the following additional terms.',
+        [
+          'Vendors must complete identity verification and provide accurate business information.',
+          'All experiences listed must comply with applicable Botswana laws and regulations.',
+          'Vendors are solely responsible for the safety, quality, and delivery of their experiences.',
+          'Vendor payouts are processed within 3–5 business days after an experience is confirmed as completed.',
+          'LeisureSpot retains a commission of up to 10% on each completed booking.',
+          'Vendors may not solicit customers to book outside the platform to circumvent fees.',
+          'We reserve the right to remove listings or suspend vendor accounts for policy violations.',
+        ]
+      ),
+      (6,'Cancellations & Refunds','Cancellation and refund policies vary by listing and are set by individual vendors.',
+        [
+          'Each listing displays its cancellation policy — review it carefully before booking.',
+          'Customers who cancel within the vendor\'s free-cancellation window receive a full refund less any non-recoverable payment processing fees.',
+          'Cancellations outside the free-cancellation window are subject to the vendor\'s policy and may result in partial or no refund.',
+          'In the event a vendor cancels a confirmed booking, customers receive a full refund including all fees.',
+          'Refunds are returned to the original payment method within 5–10 business days.',
+          'To request a cancellation, visit your dashboard or contact <strong>support@leisurespot.co.bw</strong>.',
+        ]
+      ),
+      (7,'Prohibited Conduct','You agree not to use LeisureSpot in any way that:',
+        [
+          'Violates any applicable Botswana or international law or regulation.',
+          'Involves fraudulent, deceptive, or misleading activity.',
+          'Harasses, threatens, or harms any user, vendor, or LeisureSpot employee.',
+          'Involves posting false, defamatory, or misleading reviews.',
+          'Attempts to circumvent platform fees by arranging bookings outside the platform.',
+          'Involves scraping, crawling, or automated access to the platform without written permission.',
+          'Introduces malware, viruses, or any malicious code.',
+          'Impersonates another person or entity.',
+        ]
+      ),
+      (8,'Intellectual Property','All content on the LeisureSpot platform is protected by intellectual property law.',
+        [
+          'The LeisureSpot name, logo, and platform design are the exclusive property of LeisureSpot Botswana (Pty) Ltd.',
+          'You may not reproduce, distribute, or create derivative works from our content without written permission.',
+          'Vendors retain ownership of their listing content (photos, descriptions) but grant LeisureSpot a licence to display it on the platform.',
+          'User-submitted reviews may be used by LeisureSpot for marketing purposes with your implicit consent.',
+        ]
+      ),
+      (9,'Limitation of Liability','To the fullest extent permitted by Botswana law:',
+        [
+          'LeisureSpot is not liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.',
+          'Our total liability for any claim arising from these Terms shall not exceed the amount you paid for the specific booking in question.',
+          'LeisureSpot does not warrant that the platform will be uninterrupted, error-free, or free of viruses.',
+          'We are not responsible for the acts, omissions, or conduct of any vendor or third party.',
+        ]
+      ),
+      (10,'Governing Law','These Terms are governed by the laws of the Republic of Botswana.',
+        [
+          'Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Botswana.',
+          'We encourage you to contact us first to resolve any dispute informally before pursuing legal action.',
+          'If any provision of these Terms is found to be unenforceable, the remaining provisions remain in full force.',
+        ]
+      ),
+      (11,'Changes to Terms','We may update these Terms from time to time to reflect changes to our platform or applicable law.',
+        [
+          'We will notify you of material changes by email and by displaying a prominent notice on the platform.',
+          'The "last updated" date at the top of this page reflects the most recent version.',
+          'Your continued use of the platform after changes take effect constitutes acceptance of the revised Terms.',
+        ]
+      ),
+      (12,'Contact','For questions about these Terms, please contact us.',
+        [
+          'Email: <strong>legal@leisurespot.co.bw</strong>',
+          'Address: LeisureSpot Botswana, Plot 54368, CBD, Gaborone, Botswana',
+          'Phone: +267 71 234 567',
+        ]
+      ),
+    ] %}
+
+    {% for num, title, intro, points in sections %}
+    <div id="section-{{ num }}" style="margin-bottom:3rem;padding-bottom:3rem;border-bottom:1px solid var(--border-color)">
+      <h2 style="font-family:var(--font-display);font-size:1.25rem;margin-bottom:0.625rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--teal);color:white;font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">{{ num }}</span>
+        {{ title }}
+      </h2>
+      <p style="color:var(--text-secondary);line-height:1.8;margin-bottom:1rem">{{ intro }}</p>
+      <ul style="display:flex;flex-direction:column;gap:0.625rem;padding-left:0;list-style:none">
+        {% for point in points %}
+        <li style="display:flex;align-items:flex-start;gap:0.625rem;font-size:0.9rem;color:var(--text-secondary);line-height:1.75">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:4px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>{{ point }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+
+    <div style="background:var(--secondary);border-radius:12px;padding:1.5rem;border:1px solid var(--border-color);display:flex;align-items:center;gap:1rem">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;color:var(--teal);flex-shrink:0">
+        <i data-lucide="file-text" style="width:18px;height:18px"></i>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.2rem">Questions about these Terms?</div>
+        <div style="font-size:0.85rem;color:var(--text-secondary)">Email us at <a href="mailto:legal@leisurespot.co.bw" style="color:var(--teal)">legal@leisurespot.co.bw</a> or visit our <a href="/contact" style="color:var(--teal)">Contact page</a>.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

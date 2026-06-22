@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}Edit Listing — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+      <span>Vendor Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/vendor/dashboard"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+      <a href="/vendor/listings"     class="sidebar-link active"><span class="sidebar-icon"><i data-lucide="layout-list"  style="width:17px;height:17px"></i></span> Listings</a>
+      <a href="/vendor/listings/new" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="plus-circle"        style="width:17px;height:17px"></i></span> New Listing</a>
+      <a href="/vendor/bookings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar"           style="width:17px;height:17px"></i></span> Bookings</a>
+      <a href="/vendor/availability" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar-x"         style="width:17px;height:17px"></i></span> Availability</a>
+      <a href="/vendor/profile"      class="sidebar-link"><span class="sidebar-icon"><i data-lucide="settings"           style="width:17px;height:17px"></i></span> Profile</a>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+      <a href="/dashboard"           class="sidebar-link"><span class="sidebar-icon"><i data-lucide="user"               style="width:17px;height:17px"></i></span> My Account</a>
+      <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+        <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+      </button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="dashboard-title" id="page-title">Edit Listing</h1>
+          <p class="dashboard-subtitle">Update your experience details</p>
+        </div>
+        <a href="/vendor/listings" class="btn btn-ghost btn-sm" style="display:flex;align-items:center;gap:0.4rem">
+          <i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back to Listings
+        </a>
+      </div>
+    </div>
+
+    <div id="form-container">
+      <div class="loading-state"><div class="spinner"></div><p>Loading listing…</p></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LISTING_ID = "{{ listing_id }}";
+
+const VENDOR_SIDEBAR_HTML = ''; // already in template
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+
+  const data = await apiFetch(`/listings/${LISTING_ID}`);
+  if (!data?.success) {
+    document.getElementById('form-container').innerHTML = '<div class="empty-state"><h3>Listing not found</h3><a href="/vendor/listings" class="btn btn-primary mt-2">Back to Listings</a></div>';
+    return;
+  }
+
+  const l = data.data;
+  document.getElementById('page-title').textContent = `Edit: ${l.title}`;
+
+  // Load categories first
+  const catData = await apiFetch('/categories');
+  const categories = catData?.success ? catData.data : [];
+
+  const catOptions = categories.map(cat => {
+    const sel = cat.id === l.category_id ? 'selected' : '';
+    let opts = `<option value="${cat.id}" ${sel}>${cat.name}</option>`;
+    cat.children?.forEach(child => {
+      const csel = child.id === l.category_id ? 'selected' : '';
+      opts += `<option value="${child.id}" ${csel}>  └ ${child.name}</option>`;
+    });
+    return opts;
+  }).join('');
+
+  document.getElementById('form-container').innerHTML = `
+    <div class="card" style="max-width:760px">
+      <div class="card-body">
+        <div id="edit-error" class="alert alert-error" style="display:none;margin-bottom:1rem"></div>
+        <div id="edit-success" class="alert alert-success" style="display:none;margin-bottom:1rem"></div>
+        <form id="edit-listing-form">
+
+          <h3 style="margin-bottom:1.25rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary)">Basic Information</h3>
+          <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" name="title" placeholder="e.g. 3-Day Okavango Delta Mokoro Safari" required value="${esc(l.title)}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Short Description <span style="color:var(--text-secondary);font-weight:400">(shown in cards)</span></label>
+            <input type="text" name="short_description" placeholder="One-line hook for your listing" maxlength="120" value="${esc(l.short_description || '')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Full Description</label>
+            <textarea name="description" rows="5" placeholder="Describe the experience in detail…">${esc(l.description || '')}</textarea>
+          </div>
+
+          <div class="divider"></div>
+          <h3 style="margin-bottom:1.25rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary)">Category & Location</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select name="category_id">
+                <option value="">— Select category —</option>
+                ${catOptions}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">City *</label>
+              <input type="text" name="city" placeholder="Gaborone" required value="${esc(l.city || '')}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address (optional)</label>
+            <input type="text" name="address" placeholder="123 Main Street, Gaborone" value="${esc(l.address || '')}">
+          </div>
+
+          <div class="divider"></div>
+          <h3 style="margin-bottom:1.25rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary)">Pricing & Booking</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">Price (BWP) *</label>
+              <input type="number" name="price" min="0" step="0.01" required value="${l.price || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Price Unit</label>
+              <select name="price_unit">
+                ${['per person','per couple','per group','per night','per person per night','flat rate'].map(u =>
+                  `<option value="${u}" ${l.price_unit === u ? 'selected' : ''}>${u}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" name="duration_minutes" min="0" placeholder="e.g. 180" value="${l.duration_minutes || ''}">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">Booking Type</label>
+              <select name="booking_type">
+                <option value="INSTANT" ${l.booking_type === 'INSTANT' ? 'selected' : ''}>Instant</option>
+                <option value="REQUEST" ${l.booking_type === 'REQUEST' ? 'selected' : ''}>Request</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Min Guests</label>
+              <input type="number" name="min_guests" min="1" value="${l.min_guests || 1}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Guests</label>
+              <input type="number" name="max_guests" min="1" value="${l.max_guests || 10}">
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <h3 style="margin-bottom:1.25rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary)">Details</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">What's Included <span style="color:var(--text-secondary);font-weight:400">(one per line)</span></label>
+              <textarea name="includes" rows="4" placeholder="Expert guide&#10;Park fees&#10;Lunch">${esc((l.includes || []).join('\n'))}</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">What's Excluded <span style="color:var(--text-secondary);font-weight:400">(one per line)</span></label>
+              <textarea name="excludes" rows="4" placeholder="Flights&#10;Personal insurance">${esc((l.excludes || []).join('\n'))}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags <span style="color:var(--text-secondary);font-weight:400">(comma-separated)</span></label>
+            <input type="text" name="tags" placeholder="safari, wildlife, family-friendly" value="${esc((l.tags || []).join(', '))}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cancellation Policy</label>
+            <textarea name="cancellation_policy" rows="2" placeholder="e.g. Free cancellation up to 48 hours before the experience.">${esc(l.cancellation_policy || '')}</textarea>
+          </div>
+
+          <div class="divider"></div>
+          <h3 style="margin-bottom:1.25rem;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary)">Image</h3>
+          <div class="form-group">
+            <label class="form-label">Image URL</label>
+            <input type="url" name="image_url" id="image-url-input" placeholder="https://images.pexels.com/…"
+              value="${esc(l.primary_image || l.images?.[0]?.url || '')}">
+            <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.35rem">Paste a direct image URL (Pexels, Unsplash, or your own hosted image)</div>
+          </div>
+          <div id="image-preview" style="${(l.primary_image || l.images?.[0]?.url) ? '' : 'display:none;'}margin-bottom:1.25rem">
+            <img id="preview-img" src="${esc(l.primary_image || l.images?.[0]?.url || '')}" alt="Preview"
+              style="max-height:200px;border-radius:var(--radius);object-fit:cover">
+          </div>
+
+          <div style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap">
+            <button type="submit" class="btn btn-primary btn-lg" id="save-btn">Save Changes</button>
+            <a href="/listing/${l.id}" target="_blank" class="btn btn-outline btn-lg" style="display:flex;align-items:center;gap:0.4rem">
+              <i data-lucide="eye" style="width:15px;height:15px"></i> Preview
+            </a>
+            <a href="/vendor/listings" class="btn btn-ghost btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  if (window.lucide) lucide.createIcons();
+
+  document.getElementById('image-url-input').addEventListener('input', (e) => {
+    const url = e.target.value;
+    const preview = document.getElementById('image-preview');
+    const img = document.getElementById('preview-img');
+    if (url) { img.src = url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+  });
+
+  document.getElementById('edit-listing-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    const errEl = document.getElementById('edit-error');
+    const sucEl = document.getElementById('edit-success');
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+    const fd = new FormData(e.target);
+    const payload = {
+      title: fd.get('title'),
+      short_description: fd.get('short_description') || null,
+      description: fd.get('description') || null,
+      price: parseFloat(fd.get('price')),
+      price_unit: fd.get('price_unit'),
+      city: fd.get('city'),
+      address: fd.get('address') || null,
+      booking_type: fd.get('booking_type'),
+      duration_minutes: fd.get('duration_minutes') ? parseInt(fd.get('duration_minutes')) : null,
+      min_guests: parseInt(fd.get('min_guests') || 1),
+      max_guests: parseInt(fd.get('max_guests') || 10),
+      cancellation_policy: fd.get('cancellation_policy') || null,
+      category_id: fd.get('category_id') || null,
+      includes: fd.get('includes') ? fd.get('includes').split('\n').filter(Boolean) : null,
+      excludes: fd.get('excludes') ? fd.get('excludes').split('\n').filter(Boolean) : null,
+      tags: fd.get('tags') ? fd.get('tags').split(',').map(t => t.trim()).filter(Boolean) : null,
+    };
+
+    const imageUrl = fd.get('image_url');
+    if (imageUrl) payload.image_urls = [imageUrl];
+
+    const data = await apiFetch(`/listings/${LISTING_ID}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+
+    if (data?.success) {
+      sucEl.textContent = 'Listing updated successfully!';
+      sucEl.style.display = 'flex';
+      sucEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      errEl.textContent = data?.detail || data?.message || 'Failed to save changes. Please try again.';
+      errEl.style.display = 'flex';
+    }
+  });
+});
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

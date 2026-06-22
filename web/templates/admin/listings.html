@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "admin/_sidebar.html" import admin_sidebar %}
+{% block title %}Listings — Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  {{ admin_sidebar('listings') }}
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Listings</h1>
+      <p class="dashboard-subtitle">Manage all listings — feature, archive or restore</p>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="listing-search" placeholder="Search by title or city…"
+        style="flex:1;min-width:200px;height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;outline:none"
+        onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-color)'"
+        onkeydown="if(event.key==='Enter')loadAdminListings(1)">
+      <select id="listing-status-filter" onchange="loadAdminListings(1)"
+        style="height:40px;padding:0 0.875rem;border-radius:8px;border:1px solid var(--border-color);font-size:0.875rem;background:white;outline:none">
+        <option value="">All statuses</option>
+        <option value="ACTIVE">Active</option>
+        <option value="DRAFT">Draft</option>
+        <option value="INACTIVE">Inactive</option>
+        <option value="ARCHIVED">Archived</option>
+      </select>
+      <button onclick="loadAdminListings(1)" class="btn btn-primary" style="height:40px">Filter</button>
+    </div>
+
+    <!-- Feature requests queue -->
+    <div id="feature-requests-section" style="margin-bottom:2rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <h2 style="font-size:1rem;font-weight:700">Feature Requests</h2>
+        <span id="feature-request-count" class="badge" style="background:#fef3c7;color:#92400e"></span>
+      </div>
+      <div id="feature-requests-list">
+        <div class="spinner" style="margin:1rem auto;display:block"></div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border-color);margin-bottom:1.5rem;padding-top:1.5rem">
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem">All Listings</h2>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Vendor</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Bookings</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="listings-table-body">
+          <tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner" style="margin:0 auto"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="listings-pagination" style="margin-top:1rem"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__adminPage = 'listings';</script>
+<script src="/static/js/admin.js"></script>
+{% endblock %}

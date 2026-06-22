@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Vendor Profile — LeisureSpot{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo" style="display:flex;align-items:center;gap:0.5rem">
+      <i data-lucide="map-pin" style="width:16px;height:16px;flex-shrink:0"></i>
+      <span>Vendor Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/vendor/dashboard"    class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px"></i></span> Dashboard</a>
+      <a href="/vendor/listings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="layout-list"      style="width:17px;height:17px"></i></span> Listings</a>
+      <a href="/vendor/listings/new" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="plus-circle"      style="width:17px;height:17px"></i></span> New Listing</a>
+      <a href="/vendor/bookings"     class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar"         style="width:17px;height:17px"></i></span> Bookings</a>
+      <a href="/vendor/availability" class="sidebar-link"><span class="sidebar-icon"><i data-lucide="calendar-x"      style="width:17px;height:17px"></i></span> Availability</a>
+      <a href="/vendor/profile"      class="sidebar-link active"><span class="sidebar-icon"><i data-lucide="settings"  style="width:17px;height:17px"></i></span> Profile</a>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin:1rem 0"></div>
+      <a href="/dashboard"           class="sidebar-link"><span class="sidebar-icon"><i data-lucide="user"             style="width:17px;height:17px"></i></span> My Account</a>
+      <button class="sidebar-link" data-action="logout" style="width:100%;text-align:left;background:none;border:none;cursor:pointer">
+        <span class="sidebar-icon"><i data-lucide="log-out" style="width:17px;height:17px"></i></span> Log out
+      </button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Business Profile</h1>
+      <p class="dashboard-subtitle">Update your vendor details visible to customers</p>
+    </div>
+
+    <div id="profile-content">
+      <div class="loading-state"><div class="spinner"></div><p>Loading profile…</p></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+
+  const data = await apiFetch('/vendors/profile');
+  if (!data?.success) {
+    document.getElementById('profile-content').innerHTML = `
+      <div class="alert alert-warning">
+        <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0"></i>
+        No vendor profile found. <a href="/vendor/onboarding" style="color:var(--teal);font-weight:600">Complete onboarding →</a>
+      </div>`;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  const v = data.data;
+  const b = v.business || {};
+
+  document.getElementById('profile-content').innerHTML = `
+    <div class="vendor-content-grid" style="max-width:900px">
+
+      <!-- Business Info -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-body">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem">
+            <i data-lucide="store" style="width:17px;height:17px;color:var(--teal)"></i>
+            Business Information
+          </h3>
+          <div id="biz-success" class="alert alert-success" style="display:none;margin-bottom:1rem"></div>
+          <div id="biz-error" class="alert alert-error" style="display:none;margin-bottom:1rem"></div>
+          <form id="biz-form">
+            <div class="vendor-form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Business Name *</label>
+                <input type="text" name="name" value="${esc(b.name || '')}" required placeholder="Your Business Name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Business Type</label>
+                <select name="business_type">
+                  ${['Safari & Wildlife','Restaurant & Dining','Wellness & Spa','Sports & Adventure','Events & Entertainment','Lodge & Accommodation','Family Activities','Cultural Experiences','Other'].map(t =>
+                    `<option value="${t}" ${b.business_type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea name="description" rows="4" placeholder="Tell customers about your business…">${esc(b.description || '')}</textarea>
+            </div>
+            <div class="vendor-form-grid-2">
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <select name="city">
+                  <option value="">— Select city —</option>
+                  ${['Gaborone','Francistown','Maun','Kasane','Lobatse','Selebi-Phikwe','Palapye'].map(c =>
+                    `<option value="${c}" ${b.city === c ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <input type="text" name="address" value="${esc(b.address || '')}" placeholder="Plot 123, Main Street">
+              </div>
+            </div>
+            <div class="vendor-form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" value="${esc(b.phone || '')}" placeholder="+267 71 234 567">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Website (optional)</label>
+                <input type="url" name="website" value="${esc(b.website || '')}" placeholder="https://yourbusiness.co.bw">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="biz-btn">Save Business Info</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Status -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem">
+            <i data-lucide="shield-check" style="width:17px;height:17px;color:var(--teal)"></i>
+            Account Status
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:0.875rem;font-size:0.875rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Status</span>
+              <span class="badge status-${v.status}">${v.status}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-color)">
+              <span style="color:var(--text-secondary)">Verified</span>
+              <span style="display:flex;align-items:center;gap:0.35rem;color:${v.is_verified ? 'var(--success)' : 'var(--text-secondary)'}">
+                <i data-lucide="${v.is_verified ? 'check-circle' : 'circle'}" style="width:15px;height:15px"></i>
+                ${v.is_verified ? 'Verified' : 'Not verified'}
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0">
+              <span style="color:var(--text-secondary)">Member since</span>
+              <span>${v.created_at ? new Date(v.created_at).toLocaleDateString('en-BW', {month:'short',year:'numeric'}) : '—'}</span>
+            </div>
+          </div>
+          ${v.status === 'PENDING' ? `
+            <div class="alert alert-warning" style="margin-top:1rem;font-size:0.8rem">
+              <i data-lucide="clock" style="width:14px;height:14px;flex-shrink:0"></i>
+              Your account is under review. You'll be notified once approved.
+            </div>` : ''}
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem">
+            <i data-lucide="link" style="width:17px;height:17px;color:var(--teal)"></i>
+            Quick Links
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:0.625rem">
+            <a href="/vendor/listings" class="btn btn-ghost btn-sm" style="justify-content:flex-start;gap:0.5rem">
+              <i data-lucide="layout-list" style="width:14px;height:14px"></i> Manage Listings
+            </a>
+            <a href="/vendor/bookings" class="btn btn-ghost btn-sm" style="justify-content:flex-start;gap:0.5rem">
+              <i data-lucide="calendar" style="width:14px;height:14px"></i> View Bookings
+            </a>
+            <a href="/vendor/listings/new" class="btn btn-ghost btn-sm" style="justify-content:flex-start;gap:0.5rem">
+              <i data-lucide="plus-circle" style="width:14px;height:14px"></i> Create New Listing
+            </a>
+            <a href="/account" class="btn btn-ghost btn-sm" style="justify-content:flex-start;gap:0.5rem">
+              <i data-lucide="user" style="width:14px;height:14px"></i> Personal Account Settings
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  if (window.lucide) lucide.createIcons();
+
+  document.getElementById('biz-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('biz-btn');
+    const errEl = document.getElementById('biz-error');
+    const sucEl = document.getElementById('biz-success');
+    btn.classList.add('btn-loading'); btn.disabled = true;
+    errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+    const fd = new FormData(e.target);
+    const payload = {
+      business: {
+        name: fd.get('name'),
+        description: fd.get('description') || null,
+        business_type: fd.get('business_type') || null,
+        city: fd.get('city') || null,
+        address: fd.get('address') || null,
+        phone: fd.get('phone') || null,
+        website: fd.get('website') || null,
+      }
+    };
+
+    const res = await apiFetch('/vendors/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+
+    if (res?.success) {
+      sucEl.textContent = 'Business profile updated successfully!';
+      sucEl.style.display = 'flex';
+      sucEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      errEl.textContent = res?.detail || res?.message || 'Failed to save changes.';
+      errEl.style.display = 'flex';
+    }
+  });
+});
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}
